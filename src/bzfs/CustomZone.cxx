@@ -255,11 +255,9 @@ float CustomZone::getDistToPoint (const float *_pos) const
 
 static std::string makeIntQualifier(char prefix, int value)
 {
-    static std::string qual;
     char buffer[16];
     snprintf(buffer, 16, "%c%i", prefix, value);
-    qual = buffer;
-    return qual;
+    return std::string(buffer);
 }
 
 static int checkIntQualifier(char prefix, const std::string& qual)
@@ -276,11 +274,9 @@ static int checkIntQualifier(char prefix, const std::string& qual)
 }
 
 
-const std::string& CustomZone::getFlagIdQualifier(int flagId)
+std::string CustomZone::getFlagIdQualifier(int flagId)
 {
-    static std::string qual;
-    qual = makeIntQualifier('#', flagId);
-    return qual;
+    return makeIntQualifier('#', flagId);
 }
 
 int CustomZone::getFlagIdFromQualifier(const std::string& qual)
@@ -289,16 +285,14 @@ int CustomZone::getFlagIdFromQualifier(const std::string& qual)
 }
 
 
-const std::string& CustomZone::getFlagTypeQualifier(FlagType::Ptr flagType)
+std::string CustomZone::getFlagTypeQualifier(FlagType::Ptr flagType)
 {
-    static std::string qual;
+    std::string qual;
     if (flagType != NULL)
     {
         qual = "f";
         qual += flagType->flagAbbv;
     }
-    else
-        qual = "";
     return qual;
 }
 
@@ -311,14 +305,11 @@ FlagType::Ptr CustomZone::getFlagTypeFromQualifier(const std::string& qual)
 }
 
 
-const std::string& CustomZone::getFlagSafetyQualifier(int team)
+std::string CustomZone::getFlagSafetyQualifier(int team)
 {
-    static std::string qual;
     if ((team > 0) && (team < CtfTeams))
-        qual = makeIntQualifier('$', team);
-    else
-        qual = "";
-    return qual;
+        return makeIntQualifier('$', team);
+    return std::string();
 }
 
 int CustomZone::getFlagSafetyFromQualifier(const std::string& qual)
@@ -327,14 +318,11 @@ int CustomZone::getFlagSafetyFromQualifier(const std::string& qual)
 }
 
 
-const std::string& CustomZone::getPlayerTeamQualifier(int team)
+std::string CustomZone::getPlayerTeamQualifier(int team)
 {
-    static std::string qual;
     if ((team >= 0) && (team < CtfTeams))
-        qual = makeIntQualifier('t', team);
-    else
-        qual = "";
-    return qual;
+        return makeIntQualifier('t', team);
+    return std::string();
 }
 
 int CustomZone::getPlayerTeamFromQualifier(const std::string& qual)

@@ -29,7 +29,7 @@ public:
 
     void        setSizeFraction(GLfloat);
 
-    GLfloat     getDistance(const GLfloat*) const;
+    GLfloat     getDistance(const glm::vec3 &eye) const override;
     void        move(const GLfloat pos[3]);
 
     void        notifyStyleChange() override;

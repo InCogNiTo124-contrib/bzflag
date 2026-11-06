@@ -17,15 +17,15 @@
 class WWZEventHandler : public bz_Plugin, bz_CustomMapObjectHandler
 {
 public:
-    virtual const char* Name()
+    virtual const char* Name() override
     {
         return "World Weapon Zones";
     }
-    virtual void Init(const char* config);
-    virtual void Cleanup();
-    virtual void Event(bz_EventData *eventData);
+    virtual void Init(const char* config) override;
+    virtual void Cleanup() override;
+    virtual void Event(bz_EventData *eventData) override;
 
-    virtual bool MapObject (bz_ApiString object, bz_CustomMapObjectInfo *data);
+    virtual bool MapObject (bz_ApiString object, bz_CustomMapObjectInfo *data) override;
 };
 
 BZ_PLUGIN(WWZEventHandler)

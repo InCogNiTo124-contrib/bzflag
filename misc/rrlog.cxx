@@ -32,6 +32,7 @@
 // common headers
 #include "common.h"
 #include "Pack.h"
+#include "Protocol.h"
 #include "TextUtils.h"
 #include "version.h"
 
@@ -201,7 +202,7 @@ int main(int argc, char** argv)
         if ((p->mode == RealPacket) || (p->mode == HiddenPacket) ||
                 ((p->mode == StatePacket) && needUpdate))
         {
-            if (!onlyMessages || (p->code == MsgMessage))
+            if (!onlyMessages || (p->code == MsgReceiveChat) || (p->code == MsgSendChat))
             {
                 int i, j;
                 MsgStringList list = MsgStrings::msgFromServer (p->len, p->code, p->data);

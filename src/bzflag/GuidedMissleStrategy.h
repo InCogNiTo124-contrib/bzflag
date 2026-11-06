@@ -35,6 +35,7 @@ public:
     GuidedMissileStrategy(const FiringInfo &info);
     ~GuidedMissileStrategy();
 
+    using ShotPath::update;
     void        update(float dt) override;
     float       checkHit(const BaseLocalPlayer*, float[3]) const override;
     void        sendUpdate(const FiringInfo&) const override;

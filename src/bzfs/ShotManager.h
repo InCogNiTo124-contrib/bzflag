@@ -271,14 +271,14 @@ public:
 
     virtual ~ProjectileShot() {}
 
-    virtual void Setup();
-    virtual bool Update(float dt);
+    virtual void Setup() override;
+    virtual bool Update(float dt) override;
 
     class Factory : public ShotFactory
     {
     public:
         virtual ~Factory() {}
-        virtual Shot::Ptr GetShot(uint16_t guid, const FiringInfo &info)
+        virtual Shot::Ptr GetShot(uint16_t guid, const FiringInfo &info) override
         {
             return std::make_shared<ProjectileShot>(guid, info);
         }
@@ -311,12 +311,12 @@ public:
     RicoShot(uint32_t guid, const FiringInfo &info) : ProjectileShot(guid, info) {}
     virtual ~RicoShot() {}
 
-    virtual void Setup();
+    virtual void Setup() override;
 
     class Factory : public ShotFactory
     {
     public:
-        virtual Shot::Ptr GetShot(uint16_t guid, const FiringInfo &info)
+        virtual Shot::Ptr GetShot(uint16_t guid, const FiringInfo &info) override
         {
             return std::make_shared<RicoShot>(guid, info);
         }
@@ -329,13 +329,13 @@ public:
     RapidFireShot(uint32_t guid, const FiringInfo &info) : ProjectileShot(guid, info) {}
     virtual ~RapidFireShot() {}
 
-    virtual void Setup();
+    virtual void Setup() override;
 
     class Factory : public ShotFactory
     {
     public:
         virtual ~Factory() {}
-        virtual Shot::Ptr GetShot(uint16_t guid, const FiringInfo &info)
+        virtual Shot::Ptr GetShot(uint16_t guid, const FiringInfo &info) override
         {
             return std::make_shared<RapidFireShot>(guid, info);
         }
@@ -348,13 +348,13 @@ public:
     ThiefShot(uint32_t guid, const FiringInfo &info) : ProjectileShot(guid, info) {}
     virtual ~ThiefShot() {}
 
-    virtual void Setup();
+    virtual void Setup() override;
 
     class Factory : public ShotFactory
     {
     public:
         virtual ~Factory() {}
-        virtual Shot::Ptr GetShot(uint16_t guid, const FiringInfo &info)
+        virtual Shot::Ptr GetShot(uint16_t guid, const FiringInfo &info) override
         {
             return std::make_shared<ThiefShot>(guid, info);
         }
@@ -367,12 +367,12 @@ public:
     MachineGunShot(uint32_t guid, const FiringInfo &info) : ProjectileShot(guid, info) {}
     virtual ~MachineGunShot() {}
 
-    virtual void Setup();
+    virtual void Setup() override;
 
     class Factory : public ShotFactory
     {
     public:
-        virtual Shot::Ptr GetShot(uint16_t guid, const FiringInfo &info)
+        virtual Shot::Ptr GetShot(uint16_t guid, const FiringInfo &info) override
         {
             return std::make_shared<MachineGunShot>(guid, info);
         }
@@ -385,13 +385,13 @@ public:
     LaserShot(uint32_t guid, const FiringInfo &info) : ProjectileShot(guid, info) {}
     virtual ~LaserShot() {}
 
-    virtual void Setup();
+    virtual void Setup() override;
 
     class Factory : public ShotFactory
     {
     public:
         virtual ~Factory() {}
-        virtual Shot::Ptr GetShot(uint16_t guid, const FiringInfo &info)
+        virtual Shot::Ptr GetShot(uint16_t guid, const FiringInfo &info) override
         {
             return std::make_shared<LaserShot>(guid, info);
         }
@@ -404,13 +404,13 @@ public:
     PhantomShot(uint32_t guid, const FiringInfo &info) : ProjectileShot(guid, info) {}
     virtual ~PhantomShot() {}
 
-    virtual void Setup();
+    virtual void Setup() override;
 
     class Factory : public ShotFactory
     {
     public:
         virtual ~Factory() {}
-        virtual Shot::Ptr GetShot(uint16_t guid, const FiringInfo &info)
+        virtual Shot::Ptr GetShot(uint16_t guid, const FiringInfo &info) override
         {
             return std::make_shared<PhantomShot>(guid, info);
         }
@@ -424,14 +424,14 @@ public:
     GuidedMissileShot(uint32_t guid, const FiringInfo &info) : Shot(guid, info) {}
     virtual ~GuidedMissileShot() {}
 
-    virtual void End();
-    virtual void ProcessUpdate(ShotUpdate& update);
+    virtual void End() override;
+    virtual void ProcessUpdate(ShotUpdate& update) override;
 
     class Factory : public ShotFactory
     {
     public:
         virtual ~Factory() {}
-        virtual Shot::Ptr GetShot(uint16_t guid, const FiringInfo &info)
+        virtual Shot::Ptr GetShot(uint16_t guid, const FiringInfo &info) override
         {
             return std::make_shared<GuidedMissileShot>(guid, info);
         }
@@ -443,13 +443,13 @@ class SuperBulletShot final : public ProjectileShot
 public:
     SuperBulletShot(uint32_t guid, const FiringInfo &info) : ProjectileShot(guid, info) {}
 
-    virtual void Setup();
+    virtual void Setup() override;
 
     class Factory : public ShotFactory
     {
     public:
         virtual ~Factory() {}
-        virtual Shot::Ptr GetShot(uint16_t guid, const FiringInfo &info)
+        virtual Shot::Ptr GetShot(uint16_t guid, const FiringInfo &info) override
         {
             return std::make_shared<SuperBulletShot>(guid, info);
         }
@@ -460,18 +460,18 @@ class ShockwaveShot final : public Shot
 {
 public:
     ShockwaveShot(uint32_t guid, const FiringInfo &info) : Shot(guid, info) {}
-    virtual void Setup();
-    virtual bool Update(float dt);
+    virtual void Setup() override;
+    virtual bool Update(float dt) override;
 
-    virtual bool CollideBox(glm::vec3& ecnter, glm::vec3& size, float rotation);
-    virtual bool CollideSphere(glm::vec3& center, float radius);
-    virtual bool CollideCylinder(glm::vec3& center, float height, float radius);
+    virtual bool CollideBox(glm::vec3& ecnter, glm::vec3& size, float rotation) override;
+    virtual bool CollideSphere(glm::vec3& center, float radius) override;
+    virtual bool CollideCylinder(glm::vec3& center, float height, float radius) override;
 
     class Factory : public ShotFactory
     {
     public:
         virtual ~Factory() {}
-        virtual  Shot::Ptr GetShot(uint16_t guid, const FiringInfo &info)
+        virtual  Shot::Ptr GetShot(uint16_t guid, const FiringInfo &info) override
         {
             return std::make_shared<ShockwaveShot>(guid, info);
         }

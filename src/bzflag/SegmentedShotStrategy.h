@@ -36,6 +36,7 @@ public:
     SegmentedShotStrategy(const FiringInfo&, bool useSuperTexture, bool faint = false);
     ~SegmentedShotStrategy();
 
+    using ShotPath::update;
     void        update(float dt) override;
     float       checkHit(const BaseLocalPlayer*, float[3]) const override final;
     void        addShot(SceneDatabase*, bool colorblind) override;
@@ -89,6 +90,7 @@ class ThiefStrategy final : public SegmentedShotStrategy
 public:
     ThiefStrategy(const FiringInfo&);
     ~ThiefStrategy();
+    using ShotPath::update;
     void        update(float dt) override;
     bool        isStoppedByHit() const override;
     void        addShot(SceneDatabase*, bool colorblind) override;
@@ -113,6 +115,7 @@ public:
     LaserStrategy(const FiringInfo&);
     ~LaserStrategy();
 
+    using ShotPath::update;
     void        update(float dt) override;
     bool        isStoppedByHit() const override;
     void        addShot(SceneDatabase*, bool colorblind) override;

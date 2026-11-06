@@ -15,13 +15,13 @@
 class rabbitTimer : public bz_Plugin
 {
 public:
-    virtual const char* Name ()
+    virtual const char* Name () override
     {
         return "Rabbit Timer";
     }
-    virtual void Init ( const char* config );
+    virtual void Init ( const char* config ) override;
 
-    virtual void Event ( bz_EventData *eventData );
+    virtual void Event ( bz_EventData *eventData ) override;
 
     float rabbitKillTimeLimit;    // the max time the rabbit has to kill someone
     bool rollOver;        // whether or not to roll over leftover seconds

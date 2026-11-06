@@ -23,15 +23,15 @@ public:
 class CustomZoneSample : public bz_Plugin, bz_CustomMapObjectHandler
 {
 public:
-    virtual const char* Name ()
+    virtual const char* Name () override
     {
         return "Custom Zone Sample";
     }
-    virtual void Init ( const char* config );
-    virtual void Event ( bz_EventData *eventData );
-    virtual void Cleanup ( void );
+    virtual void Init ( const char* config ) override;
+    virtual void Event ( bz_EventData *eventData ) override;
+    virtual void Cleanup ( void ) override;
 
-    virtual bool MapObject (bz_ApiString object, bz_CustomMapObjectInfo *data);
+    virtual bool MapObject (bz_ApiString object, bz_CustomMapObjectInfo *data) override;
 
     std::vector<MsgZone> msgZones;
 

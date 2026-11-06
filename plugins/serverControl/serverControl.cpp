@@ -27,13 +27,13 @@ enum action { join, part };
 class ServerControl : public bz_Plugin
 {
 public:
-    virtual const char* Name ()
+    virtual const char* Name () override
     {
         return "Server Control";
     }
-    virtual void Init ( const char* config );
+    virtual void Init ( const char* config ) override;
 
-    virtual void Event( bz_EventData *eventData );
+    virtual void Event( bz_EventData *eventData ) override;
     int loadConfig( const char *cmdLine );
 private:
     void countPlayers( action act, bz_PlayerJoinPartEventData_V1 *data );

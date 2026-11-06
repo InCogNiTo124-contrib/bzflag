@@ -15,16 +15,16 @@
 class fairCTF : public bz_Plugin, public bz_CustomSlashCommandHandler
 {
 public:
-    virtual const char* Name ()
+    virtual const char* Name () override
     {
         return "Fair CTF";
     }
 
-    virtual void Init ( const char* config );
-    virtual void Cleanup ( void );
-    virtual void Event ( bz_EventData *eventData );
+    virtual void Init ( const char* config ) override;
+    virtual void Cleanup ( void ) override;
+    virtual void Event ( bz_EventData *eventData ) override;
 
-    virtual bool SlashCommand (int playerID, bz_ApiString command, bz_ApiString message, bz_APIStringList *params);
+    virtual bool SlashCommand (int playerID, bz_ApiString command, bz_ApiString message, bz_APIStringList *params) override;
 
     virtual void DropTeamFlag(int playerID);
     virtual void SetDropTime();

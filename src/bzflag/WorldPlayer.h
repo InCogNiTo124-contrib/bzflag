@@ -28,8 +28,8 @@ public:
     WorldPlayer();
     ~WorldPlayer();
 
-    void                addShot(const FiringInfo&);
-    virtual void        addShots(SceneDatabase* scene, bool colorblind) const;
+    void                addShot(const FiringInfo&) override;
+    virtual void        addShots(SceneDatabase* scene, bool colorblind) const override;
 
 private:
     bool                doEndShot(int index, bool isHit, float* pos) override;

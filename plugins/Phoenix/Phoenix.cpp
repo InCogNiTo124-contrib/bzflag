@@ -16,11 +16,11 @@ class PhoenixEvents : public bz_Plugin
 public:
 
     std::map<int,trDeathPos> lastDeaded;
-    virtual const char* Name ()
+    virtual const char* Name () override
     {
         return "Phoenix";
     }
-    virtual void Init ( const char* /*config*/ )
+    virtual void Init ( const char* /*config*/ ) override
     {
         lastDeaded.clear();
 
@@ -30,7 +30,7 @@ public:
         Register(bz_eCaptureEvent);
     }
 
-    virtual void Event ( bz_EventData *eventData )
+    virtual void Event ( bz_EventData *eventData ) override
     {
         switch (eventData->eventType)
         {

@@ -5,7 +5,7 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Choose the type of build." FORCE)
 endif()
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -679,6 +679,21 @@ set_target_properties(TextTool2 PROPERTIES
   RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tools/TextTool2"
 )
 target_link_libraries(TextTool2 PRIVATE Freetype::Freetype PNG::PNG)
+
+add_executable(rrlog
+  misc/rrlog.cxx
+)
+target_include_directories(rrlog PRIVATE ${CMAKE_SOURCE_DIR}/src/bzfs)
+set_target_properties(rrlog PROPERTIES
+  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/misc"
+)
+target_link_libraries(rrlog PRIVATE
+  libGame
+  libNet
+  libCommon
+  libDate
+  ZLIB::ZLIB
+)
 endif()
 
 # Install rules

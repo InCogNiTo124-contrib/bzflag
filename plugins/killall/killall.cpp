@@ -6,23 +6,23 @@
 class KillAll : public bz_Plugin, bz_CustomSlashCommandHandler
 {
 public:
-    virtual const char* Name()
+    virtual const char* Name() override
     {
         return "Kill All";
     }
 
-    virtual void Init ( const char* /* config */ )
+    virtual void Init ( const char* /* config */ ) override
     {
         bz_registerCustomSlashCommand ( "killall", this );
     }
 
-    virtual void Cleanup ( void )
+    virtual void Cleanup ( void ) override
     {
         bz_removeCustomSlashCommand ( "killall" );
     }
 
     virtual bool SlashCommand ( int playerID, bz_ApiString /*command*/, bz_ApiString /*message*/,
-                                bz_APIStringList* /*params*/ )
+                                bz_APIStringList* /*params*/ ) override
     {
         bz_BasePlayerRecord *player = bz_getPlayerByIndex(playerID);
         if (!player)

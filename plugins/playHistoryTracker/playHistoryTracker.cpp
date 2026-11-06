@@ -16,11 +16,11 @@
 class PlayHistoryTracker : public bz_Plugin
 {
 public:
-    virtual const char* Name ()
+    virtual const char* Name () override
     {
         return "Play History Tracker";
     }
-    virtual void Init (const char* /* config */)
+    virtual void Init (const char* /* config */) override
     {
         // Register our events
         Register(bz_ePlayerDieEvent);
@@ -28,7 +28,7 @@ public:
         Register(bz_ePlayerJoinEvent);
     }
 
-    virtual void Event (bz_EventData *eventData);
+    virtual void Event (bz_EventData *eventData) override;
 
 protected:
     std::map<int, int> spreeCount;

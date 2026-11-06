@@ -7,7 +7,7 @@
 class RabidRabbitHandler : public bz_CustomMapObjectHandler
 {
 public:
-    virtual bool MapObject(bz_ApiString object, bz_CustomMapObjectInfo *data);
+    virtual bool MapObject(bz_ApiString object, bz_CustomMapObjectInfo *data) override;
 };
 
 RabidRabbitHandler rabidrabbithandler;
@@ -15,14 +15,14 @@ RabidRabbitHandler rabidrabbithandler;
 class RabidRabbitEventHandler : public bz_Plugin
 {
 public:
-    virtual const char* Name()
+    virtual const char* Name() override
     {
         return "Rabid Rabbit";
     }
-    virtual void Init(const char* config);
-    virtual void Cleanup();
+    virtual void Init(const char* config) override;
+    virtual void Cleanup() override;
 
-    virtual void Event(bz_EventData *eventData);
+    virtual void Event(bz_EventData *eventData) override;
 
 private:
     unsigned int currentKillZone;

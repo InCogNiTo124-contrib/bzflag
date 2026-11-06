@@ -30,14 +30,14 @@ int Leader;
 class HTFscore : public bz_Plugin, public bz_CustomSlashCommandHandler
 {
 public:
-    virtual const char* Name()
+    virtual const char* Name() override
     {
         return "Hold the Flag";
     }
-    virtual void Init ( const char* config );
-    virtual void Cleanup ( void );
-    virtual void Event ( bz_EventData *eventData );
-    virtual bool SlashCommand ( int playerID, bz_ApiString, bz_ApiString, bz_APIStringList*);
+    virtual void Init ( const char* config ) override;
+    virtual void Cleanup ( void ) override;
+    virtual void Event ( bz_EventData *eventData ) override;
+    virtual bool SlashCommand ( int playerID, bz_ApiString, bz_ApiString, bz_APIStringList*) override;
     bz_eTeamType colorNameToDef (const char *color);
     const char *colorDefToName (bz_eTeamType team);
 };

@@ -9,11 +9,11 @@ std::string url;
 class StatPush : public bz_Plugin
 {
 public:
-    virtual const char* Name ()
+    virtual const char* Name () override
     {
         return "Stats Pusher";
     }
-    virtual void Init ( const char* /* config */)
+    virtual void Init ( const char* /* config */) override
     {
         Register(bz_eListServerUpdateEvent);
         Register(bz_ePlayerPartEvent);
@@ -218,7 +218,7 @@ public:
         params += format("&hash=%d",hash);
     }
 
-    virtual void Event ( bz_EventData *eventData )
+    virtual void Event ( bz_EventData *eventData ) override
     {
         {
             if (!eventData || !bz_getPublic())

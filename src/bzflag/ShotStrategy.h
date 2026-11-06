@@ -39,16 +39,16 @@ public:
 
     virtual     ~ShotStrategy();
 
-    virtual bool    isStoppedByHit() const;
-    virtual void    expire();
+    virtual bool    isStoppedByHit() const override;
+    virtual void    expire() override;
 
     // first part of message must be the
     // ShotUpdate portion of FiringInfo.
-    virtual void    sendUpdate(const FiringInfo&) const;
+    virtual void    sendUpdate(const FiringInfo&) const override;
 
     // update shot based on message.  code is the message code.  msg
     // points to the part of the message after the ShotUpdate portion.
-    virtual void    readUpdate(uint16_t code, const void* msg);
+    virtual void    readUpdate(uint16_t code, const void* msg) override;
 
     static const Obstacle*  getFirstBuilding(const Ray&, float min, float& t);
     static void     reflect(float* v, const float* n); // const

@@ -22,15 +22,15 @@ class PlayerHandler : public bz_ServerSidePlayerHandler
 public:
     typedef std::shared_ptr<PlayerHandler> Ptr;
 
-    virtual void added(int player);   // it is required that the bot provide this method
+    virtual void added(int player) override;   // it is required that the bot provide this method
 
-    virtual void textMessage(int dest, int source, const char *text);
+    virtual void textMessage(int dest, int source, const char *text) override;
 
-    virtual void shotFired(int player, unsigned short shotID);
+    virtual void shotFired(int player, unsigned short shotID) override;
 
     void startPlay();
 
-    virtual void spawned();
+    virtual void spawned() override;
 };
 
 #endif //_PLAYER_HANDLER_H_

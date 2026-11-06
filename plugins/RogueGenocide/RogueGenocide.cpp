@@ -9,13 +9,13 @@
 class RogueGenoHandler : public bz_Plugin
 {
 public:
-    virtual const char* Name ()
+    virtual const char* Name () override
     {
         return "Rogue Genocide";
     }
-    virtual void Init (const char* config);
+    virtual void Init (const char* config) override;
 
-    virtual void Event (bz_EventData *eventData);
+    virtual void Event (bz_EventData *eventData) override;
 
     bool allowSuicide;
 };

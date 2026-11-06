@@ -26,7 +26,7 @@ class CronPlayer : public bz_ServerSidePlayerHandler
 {
 public:
     CronPlayer(); // c'tor
-    void added(int player);
+    void added(int player) override;
     void playerRejected(bz_eRejectCodes code, const char* reason);
     void sendCommand(std::string message); // expose inherited protected member sendChatMessage
 
@@ -40,16 +40,16 @@ class CronManager : public bz_Plugin, public bz_CustomSlashCommandHandler
 {
 public:
     CronManager();
-    virtual const char* Name()
+    virtual const char* Name() override
     {
         return "BZFS Cron";
     }
 
-    virtual void Init(const char* config);
-    virtual void Cleanup(void);
-    virtual void Event(bz_EventData *eventData);
+    virtual void Init(const char* config) override;
+    virtual void Cleanup(void) override;
+    virtual void Event(bz_EventData *eventData) override;
 
-    virtual bool SlashCommand(int playerID, bz_ApiString command, bz_ApiString message, bz_APIStringList *params);
+    virtual bool SlashCommand(int playerID, bz_ApiString command, bz_ApiString message, bz_APIStringList *params) override;
 
     bool connect();
     void sendMessage(std::string message);

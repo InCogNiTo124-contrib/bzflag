@@ -20,7 +20,7 @@ class LastChatCommand : public bz_CustomSlashCommandHandler
 {
 public:
     virtual ~LastChatCommand() {};
-    virtual bool SlashCommand (int playerID, bz_ApiString command, bz_ApiString message, bz_APIStringList *param);
+    virtual bool SlashCommand (int playerID, bz_ApiString command, bz_ApiString message, bz_APIStringList *param) override;
 };
 
 LastChatCommand lastChatCommand;
@@ -30,13 +30,13 @@ class ChatEvents : public bz_Plugin
 {
 public:
     virtual ~ChatEvents() {};
-    virtual const char* Name ()
+    virtual const char* Name () override
     {
         return "Chat History";
     }
-    virtual void Init (const char* c);
-    virtual void Cleanup (void);
-    virtual void Event (bz_EventData *eventData);
+    virtual void Init (const char* c) override;
+    virtual void Cleanup (void) override;
+    virtual void Event (bz_EventData *eventData) override;
 };
 
 BZ_PLUGIN(ChatEvents)

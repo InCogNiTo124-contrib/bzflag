@@ -7,7 +7,7 @@
 class KOTHMapHandler : public bz_CustomMapObjectHandler
 {
 public:
-    virtual bool MapObject ( bz_ApiString object, bz_CustomMapObjectInfo *data );
+    virtual bool MapObject ( bz_ApiString object, bz_CustomMapObjectInfo *data ) override;
 };
 
 KOTHMapHandler  kothmaphandler;
@@ -16,7 +16,7 @@ class KOTHCommands : public bz_CustomSlashCommandHandler
 {
 public:
     virtual ~KOTHCommands() {};
-    virtual bool SlashCommand ( int playerID, bz_ApiString command, bz_ApiString message, bz_APIStringList *param );
+    virtual bool SlashCommand ( int playerID, bz_ApiString command, bz_ApiString message, bz_APIStringList *param ) override;
 };
 
 KOTHCommands kothcommands;
@@ -24,14 +24,14 @@ KOTHCommands kothcommands;
 class KOTHHandler : public bz_Plugin
 {
 public:
-    virtual const char* Name ()
+    virtual const char* Name () override
     {
         return "King Of The Hill";
     }
-    virtual void Init ( const char* config );
-    virtual void Cleanup ();
+    virtual void Init ( const char* config ) override;
+    virtual void Cleanup () override;
 
-    virtual void Event ( bz_EventData *eventData );
+    virtual void Event ( bz_EventData *eventData ) override;
 
 };
 

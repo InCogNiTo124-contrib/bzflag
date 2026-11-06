@@ -63,7 +63,7 @@ void            FlagWarpSceneNode::move(const GLfloat pos[3])
     setCenter(glm::make_vec3(pos));
 }
 
-GLfloat         FlagWarpSceneNode::getDistance(const GLfloat* eye) const
+GLfloat         FlagWarpSceneNode::getDistance(const glm::vec3 &eye) const
 {
     // shift position of warp down a little because a flag and it's warp
     // are at the same position but we want the warp to appear below the

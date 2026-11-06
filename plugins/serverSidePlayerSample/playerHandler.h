@@ -19,12 +19,12 @@
 class PlayerHandler: public bz_ServerSidePlayerHandler
 {
 public:
-    virtual void added(int player);   // it is required that the bot provide this method
+    virtual void added(int player) override;   // it is required that the bot provide this method
 
-    virtual void textMessage(int dest, int source, const char *text);
+    virtual void textMessage(int dest, int source, const char *text) override;
 
-    virtual void playerSpawned(int player, const float pos[3], float rot);
-    virtual void shotFired(int player, unsigned short shotID);
+    virtual void playerSpawned(int player, const float pos[3], float rot) override;
+    virtual void shotFired(int player, unsigned short shotID) override;
 };
 
 #endif //_PLAYER_HANDLER_H_

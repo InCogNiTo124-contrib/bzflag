@@ -41,7 +41,7 @@ class TeamFillPlayer : public bz_ServerSidePlayerHandler
 {
 public:
     TeamFillPlayer(bz_eTeamType team); // c'tor
-    void added(int player);
+    void added(int player) override;
     void playerRejected(bz_eRejectCodes code, const char* reason);
 
 private:
@@ -53,24 +53,24 @@ class changeTeam : public bz_Plugin, bz_CustomSlashCommandHandler
 private:
     std::map <bz_eTeamType, std::vector<TeamFillPlayer*>> teamFillPlayers;
 public:
-    virtual const char* Name ()
+    virtual const char* Name () override
     {
         return "Change Team";
     }
-    virtual void Init ( const char* /*config*/ )
+    virtual void Init ( const char* /*config*/ ) override
     {
         bz_debugMessage(4,"changeTeam plugin loaded");
         bz_registerCustomSlashCommand("team", this);
         bz_registerCustomSlashCommand("fill", this);
     }
 
-    virtual void Cleanup ( void )
+    virtual void Cleanup ( void ) override
     {
         bz_removeCustomSlashCommand("team");
         bz_removeCustomSlashCommand("fill");
     }
 
-    virtual bool SlashCommand ( int playerID, bz_ApiString command, bz_ApiString /*message*/, bz_APIStringList* params)
+    virtual bool SlashCommand ( int playerID, bz_ApiString command, bz_ApiString /*message*/, bz_APIStringList* params) override
     {
         bz_eTeamType team = eNoTeam;
 

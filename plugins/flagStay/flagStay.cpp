@@ -26,14 +26,14 @@ std::vector<FlagStayZone> zoneList;
 class FlagStay : public bz_Plugin, bz_CustomMapObjectHandler
 {
 public:
-    virtual const char* Name ()
+    virtual const char* Name () override
     {
         return "Flag Stay Zones";
     }
-    virtual void Init (const char* cl);
-    virtual void Cleanup ();
-    virtual void Event (bz_EventData *eventData);
-    virtual bool MapObject (bz_ApiString object, bz_CustomMapObjectInfo *data);
+    virtual void Init (const char* cl) override;
+    virtual void Cleanup () override;
+    virtual void Event (bz_EventData *eventData) override;
+    virtual bool MapObject (bz_ApiString object, bz_CustomMapObjectInfo *data) override;
 };
 
 BZ_PLUGIN(FlagStay)

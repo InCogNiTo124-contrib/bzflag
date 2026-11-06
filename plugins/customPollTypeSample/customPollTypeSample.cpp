@@ -7,19 +7,19 @@
 class customPollTypeSample : public bz_Plugin, public bz_CustomPollTypeHandler
 {
 public:
-    virtual const char* Name ()
+    virtual const char* Name () override
     {
         return "Custom Poll Type";
     }
-    virtual void Init ( const char* config );
-    virtual void Cleanup ( void );
-    virtual void Event ( bz_EventData * /* eventData */ )
+    virtual void Init ( const char* config ) override;
+    virtual void Cleanup ( void ) override;
+    virtual void Event ( bz_EventData * /* eventData */ ) override
     {
         return;
     }
 
-    virtual bool PollOpen  (bz_BasePlayerRecord *player, const char* action, const char* parameters);
-    virtual void PollClose (const char* action, const char* parameters, bool success);
+    virtual bool PollOpen  (bz_BasePlayerRecord *player, const char* action, const char* parameters) override;
+    virtual void PollClose (const char* action, const char* parameters, bool success) override;
 };
 
 BZ_PLUGIN(customPollTypeSample)

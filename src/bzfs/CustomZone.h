@@ -53,16 +53,16 @@ public:
     float getDistToPoint (const float *pos) const;
 
 public:
-    static const std::string& getFlagIdQualifier(int flagId);
+    static std::string getFlagIdQualifier(int flagId);
     static int getFlagIdFromQualifier(const std::string&);
 
-    static const std::string& getFlagTypeQualifier(FlagType::Ptr flagType);
+    static std::string getFlagTypeQualifier(FlagType::Ptr flagType);
     static FlagType::Ptr getFlagTypeFromQualifier(const std::string&);
 
-    static const std::string& getFlagSafetyQualifier(int team);
+    static std::string getFlagSafetyQualifier(int team);
     static int getFlagSafetyFromQualifier(const std::string&);
 
-    static const std::string& getPlayerTeamQualifier(int team);
+    static std::string getPlayerTeamQualifier(int team);
     static int getPlayerTeamFromQualifier(const std::string&);
 
 private:

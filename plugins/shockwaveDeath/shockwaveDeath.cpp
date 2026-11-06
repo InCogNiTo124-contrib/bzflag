@@ -7,12 +7,12 @@
 class SWDeathHandler : public bz_Plugin
 {
 public:
-    virtual const char* Name ()
+    virtual const char* Name () override
     {
         return "Shockwave Death";
     }
-    virtual void Init(const char* config);
-    virtual void Event(bz_EventData *eventData);
+    virtual void Init(const char* config) override;
+    virtual void Event(bz_EventData *eventData) override;
 };
 
 BZ_PLUGIN(SWDeathHandler)

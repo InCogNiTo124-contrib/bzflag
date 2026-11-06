@@ -8,13 +8,13 @@ class genocide : public bz_Plugin
 {
 public:
     virtual ~genocide() {};
-    virtual const char* Name ()
+    virtual const char* Name () override
     {
         return "Genocide";
     }
-    virtual void Init ( const char* c );
-    virtual void Cleanup ( void );
-    virtual void Event ( bz_EventData *eventData );
+    virtual void Init ( const char* c ) override;
+    virtual void Cleanup ( void ) override;
+    virtual void Event ( bz_EventData *eventData ) override;
 };
 
 BZ_PLUGIN(genocide)
