@@ -35,10 +35,8 @@ AresHandler::AresHandler(int _index)
 
     opts.lookups = lookups;
     flags       |= ARES_OPT_LOOKUPS;
-#if ARES_VERSION_MAJOR > 1 || ARES_VERSION_MINOR >= 26
     opts.evsys   = ARES_EVSYS_DEFAULT;
     flags       |= ARES_OPT_EVENT_THREAD;
-#endif
 
     /* start up our resolver */
     if (!globallyInited)
@@ -91,8 +89,8 @@ void AresHandler::queryHostname(const struct sockaddr *clientAddr)
 
     status = HbAPending;
     // launch the asynchronous query to look up this hostname
-    ares_gethostbyaddr(aresChannel, &((const sockaddr_in *)clientAddr)->sin_addr,
-                       sizeof(in_addr), clientAddr->sa_family, staticCallback, (void *)this);
+    ares_getnameinfo(aresChannel, clientAddr, sizeof(sockaddr_in),
+                     ARES_NI_NAMEREQD | ARES_NI_LOOKUPHOST, staticCallbackNameInfo, (void *)this);
     logDebugMessage(2,"Player [%d] submitted reverse resolve query\n", index);
 }
 
@@ -117,33 +115,26 @@ void AresHandler::queryHost(const char *name)
     // launch the asynchronous query to look up this hostname
     status = HbNPending;
 
-#if HAVE_ARES_GETADDRINFO
     struct ares_addrinfo_hints hints;
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET;
 
     ares_getaddrinfo(aresChannel, name, NULL, &hints, staticCallbackAddrInfo,
                      (void *)this);
-#else
-    ares_gethostbyname(aresChannel, name, AF_INET, staticCallback,
-                       (void *)this);
-#endif
 }
 
-void AresHandler::staticCallback(void *arg, int callbackStatus,
-                                 int, struct hostent *hostent)
+void AresHandler::staticCallbackNameInfo(void *arg, int status,
+        int, char *node, char *service)
 {
-    ((AresHandler *)arg)->callback(callbackStatus, hostent);
+    if (status != ARES_EDESTRUCTION)
+        ((AresHandler *)arg)->callbackNameInfo(status, node, service);
 }
 
-void AresHandler::callback(int callbackStatus, struct hostent *hostent)
+void AresHandler::callbackNameInfo(int callbackStatus, char *node, char *)
 {
-    if (callbackStatus == ARES_EDESTRUCTION)
-        return;
-
     const std::lock_guard<std::mutex> lock(callback_mutex);
 
-    if (callbackStatus != ARES_SUCCESS)
+    if (callbackStatus != ARES_SUCCESS || !node)
     {
         logDebugMessage(1,"Player [%d] failed to resolve: error %d\n", index,
                         callbackStatus);
@@ -151,18 +142,12 @@ void AresHandler::callback(int callbackStatus, struct hostent *hostent)
     }
     else if (status == HbAPending)
     {
-        hostName = hostent->h_name;
+        hostName = node;
         status = HbASucceeded;
         logDebugMessage(2,"Player [%d] resolved to %s\n", index, hostName.c_str());
     }
-    else if (status == HbNPending)
-    {
-        memcpy(&hostAddress, hostent->h_addr_list[0], sizeof(hostAddress));
-        status = HbNSucceeded;
-    }
 }
 
-#if HAVE_ARES_GETADDRINFO
 void AresHandler::staticCallbackAddrInfo(void *arg, int status,
         int, struct ares_addrinfo *result)
 {
@@ -201,7 +186,6 @@ void AresHandler::callbackAddrInfo(int callbackStatus, struct ares_addrinfo *res
             status = Failed;
     }
 }
-#endif
 
 const char *AresHandler::getHostname()
 {
@@ -225,31 +209,6 @@ AresHandler::ResolutionStatus AresHandler::getHostAddress(struct in_addr
 
     return oldStatus;
 }
-
-#if ARES_VERSION_MAJOR > 1 || ARES_VERSION_MINOR >= 26
-void AresHandler::setFd(fd_set *, fd_set *, int &)
-{
-}
-void AresHandler::process(fd_set *, fd_set *)
-{
-}
-#else
-void AresHandler::setFd(fd_set *read_set, fd_set *write_set, int &maxFile)
-{
-    if (aresFailed)
-        return;
-    int aresMaxFile = ares_fds(aresChannel, read_set, write_set) - 1;
-    if (aresMaxFile > maxFile)
-        maxFile = aresMaxFile;
-}
-
-void AresHandler::process(fd_set *read_set, fd_set *write_set)
-{
-    if (aresFailed)
-        return;
-    ares_process(aresChannel, read_set, write_set);
-}
-#endif
 
 // Local Variables: ***
 // mode: C++ ***

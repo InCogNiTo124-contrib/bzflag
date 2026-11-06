@@ -47,21 +47,17 @@ public:
     void      queryHost(const char *hostName);
     const char   *getHostname();
     ResolutionStatus getHostAddress(struct in_addr *clientAddr);
-    void      setFd(fd_set *read_set, fd_set *write_set, int &maxFile);
-    void      process(fd_set *read_set, fd_set *write_set);
     ResolutionStatus getStatus()
     {
         return status;
     };
 private:
-#if HAVE_ARES_GETADDRINFO
     static void staticCallbackAddrInfo(void *arg, int status,
                                        int timeout, struct ares_addrinfo *result);
     void      callbackAddrInfo(int status, struct ares_addrinfo *result);
-#endif
-    static void   staticCallback(void *arg, int statusCallback, int timeouts,
-                                 struct hostent *hostent);
-    void      callback(int status, struct hostent *hostent);
+    static void staticCallbackNameInfo(void *arg, int status,
+                                       int timeouts, char *node, char *service);
+    void      callbackNameInfo(int status, char *node, char *service);
 
     int       index;
 

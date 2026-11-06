@@ -7811,9 +7811,6 @@ int main(int argc, char **argv)
                 }
             }
 
-            // process eventual resolver requests
-            NetHandler::checkDNS(&read_set, &write_set);
-
             // now check messages from connected players and send queued messages
             GameKeeper::Player *playerData;
             NetHandler* netPlayer(0);

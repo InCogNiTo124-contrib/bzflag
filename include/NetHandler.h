@@ -98,9 +98,6 @@ public:
     static bool   isUdpFdSet(fd_set *read_set);
     bool      isFdSet(fd_set *set);
 
-    /// Supporting DNS Asynchronous resolver
-    static void   checkDNS(fd_set *read_set, fd_set *write_set);
-
     /// return the opened socket, usable from all other network internal client
     static int    getUdpSocket();
 

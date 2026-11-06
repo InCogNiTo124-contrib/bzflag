@@ -70,9 +70,9 @@ endif()
 
 find_package(Threads REQUIRED)
 find_package(ZLIB REQUIRED)
-find_package(CURL REQUIRED)
-find_library(CARES_LIBRARY NAMES cares REQUIRED)
-find_path(CARES_INCLUDE_DIR NAMES ares.h REQUIRED)
+find_package(CURL 7.85.0 REQUIRED)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(CARES REQUIRED IMPORTED_TARGET libcares>=1.26.0)
 
 if(BUILD_CLIENT OR BUILD_TOOLS)
   find_package(PNG REQUIRED)
@@ -115,7 +115,6 @@ configure_file(
 include_directories(
   ${CMAKE_BINARY_DIR}/include
   ${CMAKE_SOURCE_DIR}/include
-  ${CARES_INCLUDE_DIR}
 )
 if(MINIUPNPC_INCLUDE_DIR)
   include_directories(${MINIUPNPC_INCLUDE_DIR})
@@ -184,7 +183,7 @@ add_library(libNet STATIC
   src/net/multicast.cxx
   src/net/network.cxx
 )
-target_link_libraries(libNet PUBLIC ${CARES_LIBRARY})
+target_link_libraries(libNet PUBLIC PkgConfig::CARES)
 if(MINIUPNPC_LIBRARY)
   target_link_libraries(libNet PUBLIC ${MINIUPNPC_LIBRARY})
 endif()
@@ -452,7 +451,7 @@ target_link_libraries(bzflag PRIVATE
   libMediaFile
   libCommon
   libDate
-  ${CARES_LIBRARY}
+  PkgConfig::CARES
   PNG::PNG
   ZLIB::ZLIB
   SDL2::SDL2
@@ -545,7 +544,7 @@ target_link_libraries(bzfs PRIVATE
   libCommon
   libDate
   CURL::libcurl
-  ${CARES_LIBRARY}
+  PkgConfig::CARES
   ZLIB::ZLIB
   Threads::Threads
   dl
@@ -581,7 +580,7 @@ target_link_libraries(bzadmin PRIVATE
   libNet
   libCommon
   CURL::libcurl
-  ${CARES_LIBRARY}
+  PkgConfig::CARES
   ZLIB::ZLIB
   Threads::Threads
   m

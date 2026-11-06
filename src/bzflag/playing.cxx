@@ -7138,18 +7138,6 @@ static void     playingLoop()
 
         if (waitingDNS)
         {
-            fd_set readers, writers;
-            int nfds = -1;
-            struct timeval timeout;
-            timeout.tv_sec  = 0;
-            timeout.tv_usec = 0;
-            FD_ZERO(&readers);
-            FD_ZERO(&writers);
-            ares->setFd(&readers, &writers, nfds);
-            nfds = select(nfds + 1, (fd_set*)&readers, (fd_set*)&writers, 0,
-                          &timeout);
-            ares->process(&readers, &writers);
-
             struct in_addr inAddress;
             AresHandler::ResolutionStatus status = ares->getHostAddress(&inAddress);
             if (status == AresHandler::Failed)

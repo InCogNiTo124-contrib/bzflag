@@ -119,16 +119,6 @@ void NetHandler::setFd(fd_set *read_set, fd_set *write_set, int &maxFile)
     FD_SET((unsigned int)udpSocket, read_set);
     if (udpSocket > maxFile)
         maxFile = udpSocket;
-
-    for (int i = 0; i < maxHandlers; i++)
-    {
-        NetHandler *player = netPlayer[i];
-        if (player)
-        {
-            if (player->ares)
-                player->ares->setFd(read_set, write_set, maxFile);
-        }
-    }
 }
 
 int NetHandler::getUdpSocket()
@@ -253,19 +243,6 @@ bool NetHandler::isUdpFdSet(fd_set *read_set)
     if (FD_ISSET(udpSocket, read_set))
         return true;
     return false;
-}
-
-void NetHandler::checkDNS(fd_set *read_set, fd_set *write_set)
-{
-    for (int i = 0; i < maxHandlers; i++)
-    {
-        NetHandler *player = netPlayer[i];
-        if (player)
-        {
-            if (player->ares)
-                player->ares->process(read_set, write_set);
-        }
-    }
 }
 
 int NetHandler::udpSocket = -1;

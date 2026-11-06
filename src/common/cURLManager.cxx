@@ -326,12 +326,12 @@ void cURLManager::infoComplete(CURLcode result)
 
 bool cURLManager::getFileTime(time_t &t)
 {
-    long filetime;
+    curl_off_t filetime;
     CURLcode result;
-    result = curl_easy_getinfo(easyHandle, CURLINFO_FILETIME, &filetime);
+    result = curl_easy_getinfo(easyHandle, CURLINFO_FILETIME_T, &filetime);
     if (result)
     {
-        logDebugMessage(1,"CURLINFO_FILETIME error %d : %s\n", result, errorBuffer);
+        logDebugMessage(1,"CURLINFO_FILETIME_T error %d : %s\n", result, errorBuffer);
         return false;
     }
     t = (time_t)filetime;
@@ -372,10 +372,10 @@ void cURLManager::setTimeCondition(timeCondition condition, time_t &t)
         if (result != CURLE_OK)
             logDebugMessage(1,"CURLOPT_TIMECONDITION error %d : %s\n", result, errorBuffer);
         result = curl_easy_setopt(easyHandle,
-                                  CURLOPT_TIMEVALUE,
-                                  (long)t);
+                                  CURLOPT_TIMEVALUE_LARGE,
+                                  (curl_off_t)t);
         if (result != CURLE_OK)
-            logDebugMessage(1,"CURLOPT_TIMEVALUE error %d : %s\n", result, errorBuffer);
+            logDebugMessage(1,"CURLOPT_TIMEVALUE_LARGE error %d : %s\n", result, errorBuffer);
         break;
     default:
         break;
