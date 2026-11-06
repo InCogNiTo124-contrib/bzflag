@@ -1,0 +1,122 @@
+/* include/config.h.  Generated from cmake/config.h.in by CMake.  */
+
+#ifndef BZFLAG_CONFIG_H
+#define BZFLAG_CONFIG_H
+
+/* BZFlag build date */
+#define BUILD_DATE "@BUILD_DATE@"
+
+/* Data file directory */
+#define BZFLAG_DATA "@BZFLAG_DATA@"
+
+/* BZFlag System Environment */
+#define BZ_BUILD_OS "@BZ_BUILD_OS@"
+
+/* Enable plugins */
+#define BZ_PLUGINS 1
+
+/* Half rate Audio */
+#define HALF_RATE_AUDIO 1
+
+/* libm math functions */
+#define HAVE_ACOSF 1
+#define HAVE_ASINF 1
+#define HAVE_ATAN2F 1
+#define HAVE_ATANF 1
+#define HAVE_COSF 1
+#define HAVE_EXPF 1
+#define HAVE_FABSF 1
+#define HAVE_FLOORF 1
+#define HAVE_FMODF 1
+#define HAVE_HYPOTF 1
+#define HAVE_LOG10F 1
+#define HAVE_LOGF 1
+#define HAVE_POWF 1
+#define HAVE_SINF 1
+#define HAVE_SQRTF 1
+#define HAVE_TANF 1
+
+/* Define if libcares includes ares_getaddrinfo. */
+#define HAVE_ARES_GETADDRINFO 1
+
+/* Define to 1 if you have the 'atexit' function. */
+#define HAVE_ATEXIT 1
+
+/* Standard C++ headers */
+#define HAVE_CMATH 1
+#define HAVE_CSTDIO 1
+#define HAVE_CSTDLIB 1
+#define HAVE_CSTRING 1
+
+/* define if the compiler supports basic C++11 syntax */
+#define HAVE_CXX11 1
+
+/* System headers and features */
+#define HAVE_DLFCN_H 1
+#define HAVE_FCNTL_H 1
+#define HAVE_FF_EFFECT_DIRECTIONAL 1
+#define HAVE_FF_EFFECT_RUMBLE 1
+#define HAVE_GLM_GLM_HPP 1
+#define HAVE_HSTRERROR 1
+#define HAVE_INTTYPES_H 1
+#define HAVE_LIBCURL 1
+#define HAVE_LIBM 1
+#define HAVE_LIMITS_H 1
+#cmakedefine HAVE_LINUX_INPUT_H 1
+#cmakedefine HAVE_MINIUPNPC_MINIUPNPC_H 1
+#cmakedefine LIBMINIUPNPC 1
+#cmakedefine HAVE_NCURSES_H 1
+#define HAVE_NETDB_H 1
+#define HAVE_PNG_H 1
+#define HAVE_PTHREADS 1
+#cmakedefine HAVE_REGEX_H 1
+#cmakedefine HAVE_SCHED_H 1
+#define HAVE_SCHED_SETAFFINITY 1
+#cmakedefine HAVE_SDL2_SDL_H 1
+#define HAVE_SELECT 1
+#define HAVE_SOCKLEN_T 1
+#define HAVE_STDINT_H 1
+#define HAVE_STDIO_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STD__COUNT 1
+#define HAVE_STD__ISNAN 1
+#define HAVE_STD__MAX 1
+#define HAVE_STD__MIN 1
+#define HAVE_STRINGS_H 1
+#define HAVE_STRING_H 1
+#define HAVE_SYS_PARAM_H 1
+#define HAVE_SYS_SOCKET_H 1
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+#define HAVE_UNISTD_H 1
+#define HAVE_USLEEP 1
+#cmakedefine HAVE_VALUES_H 1
+#define HAVE_VSNPRINTF 1
+#cmakedefine WORDS_BIGENDIAN 1
+
+/* Package metadata */
+#define PACKAGE "bzflag"
+#define PACKAGE_BUGREPORT "https://BZFlag.org/"
+#define PACKAGE_NAME "BZFlag"
+#define PACKAGE_STRING "BZFlag @PROJECT_VERSION@"
+#define PACKAGE_TARNAME "bzflag"
+#define PACKAGE_URL ""
+#define PACKAGE_VERSION "@PROJECT_VERSION@"
+#define VERSION "@PROJECT_VERSION@"
+
+/* Enabling Robots */
+#define ROBOT 1
+
+/* Numeric type sizes */
+#define SIZEOF_DOUBLE @SIZEOF_DOUBLE@
+#define SIZEOF_FLOAT @SIZEOF_FLOAT@
+#define SIZEOF_INT @SIZEOF_INT@
+#define SIZEOF_LONG_DOUBLE @SIZEOF_LONG_DOUBLE@
+#define SIZEOF_LONG_INT @SIZEOF_LONG_INT@
+#define SIZEOF_LONG_LONG_INT @SIZEOF_LONG_LONG_INT@
+#define SIZEOF_SHORT_INT @SIZEOF_SHORT_INT@
+
+#define STDC_HEADERS 1
+#define _REENTRANT 1
+
+#endif /* BZFLAG_CONFIG_H */

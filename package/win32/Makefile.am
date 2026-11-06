@@ -1,4 +1,0 @@
-SUBDIRS = nsis
-
-MAINTAINERCLEANFILES = \
-	Makefile.in

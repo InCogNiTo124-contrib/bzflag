@@ -36,7 +36,7 @@ if [ $? != 0 ] ; then
 fi
 
 # copy the template files (Add new files as necessary)
-for file in Makefile.am README.SAMPLE_PLUGIN.txt SAMPLE_PLUGIN.cpp SAMPLE_PLUGIN.sln SAMPLE_PLUGIN.vcxproj premake5.lua ;do
+for file in README.SAMPLE_PLUGIN.txt SAMPLE_PLUGIN.cpp ;do
     echo "cp $PATH_TO_HERE/$SAMPLE_PLUGIN/$file $PATH_TO_HERE/$ARG1"
     cp "$PATH_TO_HERE/$SAMPLE_PLUGIN/$file" "$PATH_TO_HERE/$ARG1"
     if [ $? != 0 ] ; then
@@ -65,5 +65,5 @@ done
 
 echo "---"
 echo "New plugin \"$ARG1\" is ready in a directory with that name."
-echo "Use \"configure --enable-custom-plugins=$ARG1\" to have it built"
-echo "automatically along with the standard plugins."
+echo "Add \"add_bzflag_plugin($ARG1 USE_UTILS SOURCES plugins/$ARG1/$ARG1.cpp)\" to CMakeLists.txt"
+echo "to have it built automatically along with the standard plugins."

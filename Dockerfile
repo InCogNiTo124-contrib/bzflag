@@ -9,7 +9,7 @@ ARG configure=""
 
 # Update package list and upgrade, and install build dependencies
 RUN apk update && apk upgrade --no-cache && \
-    apk add --no-cache autoconf automake c-ares-dev curl-dev g++ libtool make zlib
+    apk add --no-cache c-ares-dev cmake curl-dev g++ ninja pkgconf zlib-dev
 
 # Create and switch to a normal user for the build
 RUN adduser -S builder
@@ -21,17 +21,17 @@ COPY --chown=builder:nogroup . bzflag/
 WORKDIR /home/builder/bzflag
 
 # Run the build process
-RUN ./autogen.sh && \
-    ./configure \
-        --disable-bzadmin \
-        --disable-client \
-        --enable-custom-plugins="$plugins" \
+RUN cmake -B build -G Ninja \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DBUILD_CLIENT=OFF \
+        -DBUILD_BZADMIN=OFF \
+        -DBUILD_TOOLS=OFF \
         $configure && \
-    make -j$(nproc)
+    cmake --build build
 
 # Switch to root to run the install step
 USER root
-RUN make install-strip
+RUN cmake --install build --strip
 
 # Start the final image
 FROM alpine:3

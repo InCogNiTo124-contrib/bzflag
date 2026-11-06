@@ -83,6 +83,13 @@ std::string findPlugin ( std::string pluginName )
 
 #ifdef DEBUG
     // check the local plugins dir
+    name = "plugins/" + pluginName + "/" + pluginName + extension;
+    fp = fopen(name.c_str(),"rb");
+    if (fp)
+    {
+        fclose(fp);
+        return name;
+    }
     name = "plugins/" + pluginName + "/.libs/" + pluginName + extension;
     fp = fopen(name.c_str(),"rb");
     if (fp)
