@@ -22,7 +22,7 @@ BzfMedia*       PlatformFactory::media = 0;
 PlatformFactory::PlatformFactory()
 {
     Uint32 flags = 0;
-    if (SDL_Init(flags) < 0)
+    if (!SDL_Init(flags))
     {
         printFatalError("Could not initialize SDL: %s.\n", SDL_GetError());
         exit(-1);

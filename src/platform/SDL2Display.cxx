@@ -18,7 +18,7 @@
 
 SDLDisplay::SDLDisplay() : mouseWheelStopEvent(SDL_RegisterEvents(1))
 {
-    if (SDL_VideoInit(NULL) < 0)
+    if (!SDL_InitSubSystem(SDL_INIT_VIDEO))
     {
         printf("Could not initialize SDL Video subsystem: %s.\n", SDL_GetError());
         exit (-1);
@@ -26,50 +26,51 @@ SDLDisplay::SDLDisplay() : mouseWheelStopEvent(SDL_RegisterEvents(1))
 
     int defaultResolutionIndex = 0;
     ResInfo** _resolutions;
-    int _numResolutions = SDL_GetNumDisplayModes(0);
-    SDL_DisplayMode mode;
+    int _numResolutions = 0;
     std::vector<int> h;
     std::vector<int> w;
     int j = 0;
 
-    if (!_numResolutions)
-        // No modes available or All resolutions available
-        printf("Could not Get available video modes: %s.\n", SDL_GetError());
-
-    int result = SDL_GetCurrentDisplayMode(0, &mode);
-    if (result)
+    SDL_DisplayID primaryDisplay = SDL_GetPrimaryDisplay();
+    const SDL_DisplayMode* currentMode = SDL_GetCurrentDisplayMode(primaryDisplay);
+    if (!currentMode)
         printf("Could not get current display mode: %s.\n", SDL_GetError());
     else
     {
-        h.push_back(mode.h);
-        w.push_back(mode.w);
+        h.push_back(currentMode->h);
+        w.push_back(currentMode->w);
         j++;
     }
 
-    int i;
-    for (i = 0; i < _numResolutions; i++)
+    int numModes = 0;
+    SDL_DisplayMode** modes = SDL_GetFullscreenDisplayModes(primaryDisplay, &numModes);
+    if (!modes || numModes == 0)
+        printf("Could not Get available video modes: %s.\n", SDL_GetError());
+    else
     {
-        result = SDL_GetDisplayMode(0, i, &mode);
-        if (result)
-            printf("Could not Get video mode: %s.\n", SDL_GetError());
-        int k;
-        for (k = 0; k < j; k++)
+        for (int i = 0; i < numModes; i++)
         {
-            if ((h[k] == mode.h) && (w[k] == mode.w))
-                break;
+            const SDL_DisplayMode* m = modes[i];
+            int k;
+            for (k = 0; k < j; k++)
+            {
+                if ((h[k] == m->h) && (w[k] == m->w))
+                    break;
+            }
+            if (k >= j)
+            {
+                h.push_back(m->h);
+                w.push_back(m->w);
+                j++;
+            }
         }
-        if (k >= j)
-        {
-            h.push_back(mode.h);
-            w.push_back(mode.w);
-            j++;
-        }
+        SDL_free(modes);
     }
 
     _numResolutions = j;
     _resolutions = new ResInfo*[_numResolutions];
 
-    for (i = 0; i < _numResolutions; i++)
+    for (int i = 0; i < _numResolutions; i++)
     {
         char name[80];
         sprintf(name, "%dx%d    ", w[i], h[i]);
@@ -91,14 +92,14 @@ bool SDLDisplay::isEventPending() const
     // Fixing a bug on SDL 2.0.20
     SDL_PumpEvents();
 
-    return (SDL_PollEvent(NULL) == 1);
+    return SDL_PollEvent(NULL);
 }
 
 
 bool SDLDisplay::getEvent(BzfEvent& _event) const
 {
     SDL_Event event;
-    if (SDL_PollEvent(&event) == 0)
+    if (!SDL_PollEvent(&event))
         return false;
 
     return setupEvent(_event, event);
@@ -113,7 +114,7 @@ bool SDLDisplay::peekEvent(BzfEvent& _event) const
      * SDL_PollEvent does the job
      */
     SDL_Event event;
-    if (SDL_PeepEvents(&event, 1, SDL_PEEKEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT) <= 0)
+    if (SDL_PeepEvents(&event, 1, SDL_PEEKEVENT, SDL_EVENT_FIRST, SDL_EVENT_LAST) <= 0)
         return false;
 
     return setupEvent(_event, event);
@@ -122,8 +123,8 @@ bool SDLDisplay::peekEvent(BzfEvent& _event) const
 
 bool SDLDisplay::getKey(const SDL_Event& sdlEvent, BzfKeyEvent& key, const char asciiText) const
 {
-    SDL_Keycode sym = sdlEvent.key.keysym.sym;
-    Uint16      mod = sdlEvent.key.keysym.mod;
+    SDL_Keycode sym = sdlEvent.key.key;
+    SDL_Keymod  mod = sdlEvent.key.mod;
 
     key.ascii = 0;
     switch (sym)
@@ -201,7 +202,7 @@ bool SDLDisplay::getKey(const SDL_Event& sdlEvent, BzfKeyEvent& key, const char 
         key.button = BzfKeyEvent::F12;
         break;
     case SDLK_KP_0:
-        if (mod & KMOD_NUM)
+        if (mod & SDL_KMOD_NUM)
         {
             key.button = BzfKeyEvent::Kp0;
             key.ascii = '0';
@@ -210,7 +211,7 @@ bool SDLDisplay::getKey(const SDL_Event& sdlEvent, BzfKeyEvent& key, const char 
             key.button = BzfKeyEvent::Insert;
         break;
     case SDLK_KP_1:
-        if (mod & KMOD_NUM)
+        if (mod & SDL_KMOD_NUM)
         {
             key.button = BzfKeyEvent::Kp1;
             key.ascii = '1';
@@ -219,7 +220,7 @@ bool SDLDisplay::getKey(const SDL_Event& sdlEvent, BzfKeyEvent& key, const char 
             key.button = BzfKeyEvent::End;
         break;
     case SDLK_KP_2:
-        if (mod & KMOD_NUM)
+        if (mod & SDL_KMOD_NUM)
         {
             key.button = BzfKeyEvent::Kp2;
             key.ascii = '2';
@@ -228,7 +229,7 @@ bool SDLDisplay::getKey(const SDL_Event& sdlEvent, BzfKeyEvent& key, const char 
             key.button = BzfKeyEvent::Down;
         break;
     case SDLK_KP_3:
-        if (mod & KMOD_NUM)
+        if (mod & SDL_KMOD_NUM)
         {
             key.button = BzfKeyEvent::Kp3;
             key.ascii = '3';
@@ -237,7 +238,7 @@ bool SDLDisplay::getKey(const SDL_Event& sdlEvent, BzfKeyEvent& key, const char 
             key.button = BzfKeyEvent::PageDown;
         break;
     case SDLK_KP_4:
-        if (mod & KMOD_NUM)
+        if (mod & SDL_KMOD_NUM)
         {
             key.button = BzfKeyEvent::Kp4;
             key.ascii = '4';
@@ -246,7 +247,7 @@ bool SDLDisplay::getKey(const SDL_Event& sdlEvent, BzfKeyEvent& key, const char 
             key.button = BzfKeyEvent::Left;
         break;
     case SDLK_KP_5:
-        if (mod & KMOD_NUM)
+        if (mod & SDL_KMOD_NUM)
         {
             key.button = BzfKeyEvent::Kp5;
             key.ascii = '5';
@@ -258,7 +259,7 @@ bool SDLDisplay::getKey(const SDL_Event& sdlEvent, BzfKeyEvent& key, const char 
         }
         break;
     case SDLK_KP_6:
-        if (mod & KMOD_NUM)
+        if (mod & SDL_KMOD_NUM)
         {
             key.button = BzfKeyEvent::Kp6;
             key.ascii = '6';
@@ -267,7 +268,7 @@ bool SDLDisplay::getKey(const SDL_Event& sdlEvent, BzfKeyEvent& key, const char 
             key.button = BzfKeyEvent::Right;
         break;
     case SDLK_KP_7:
-        if (mod & KMOD_NUM)
+        if (mod & SDL_KMOD_NUM)
         {
             key.button = BzfKeyEvent::Kp7;
             key.ascii = '7';
@@ -276,7 +277,7 @@ bool SDLDisplay::getKey(const SDL_Event& sdlEvent, BzfKeyEvent& key, const char 
             key.button = BzfKeyEvent::Home;
         break;
     case SDLK_KP_8:
-        if (mod & KMOD_NUM)
+        if (mod & SDL_KMOD_NUM)
         {
             key.button = BzfKeyEvent::Kp8;
             key.ascii = '8';
@@ -285,7 +286,7 @@ bool SDLDisplay::getKey(const SDL_Event& sdlEvent, BzfKeyEvent& key, const char 
             key.button = BzfKeyEvent::Up;
         break;
     case SDLK_KP_9:
-        if (mod & KMOD_NUM)
+        if (mod & SDL_KMOD_NUM)
         {
             key.button = BzfKeyEvent::Kp9;
             key.ascii = '9';
@@ -294,7 +295,7 @@ bool SDLDisplay::getKey(const SDL_Event& sdlEvent, BzfKeyEvent& key, const char 
             key.button = BzfKeyEvent::PageUp;
         break;
     case SDLK_KP_PERIOD:
-        if (mod & KMOD_NUM)
+        if (mod & SDL_KMOD_NUM)
         {
             key.button = BzfKeyEvent::Kp_Period;
             key.ascii = '.';
@@ -348,7 +349,7 @@ bool SDLDisplay::getKey(const SDL_Event& sdlEvent, BzfKeyEvent& key, const char 
         key.button = BzfKeyEvent::NoButton;
         if (asciiText)
             key.ascii = asciiText;
-        else if ((sym >= 0) && (sym <= 0x7F))
+        else if (sym <= 0x7F)
             key.ascii = (char) sym;
         else
             return false;
@@ -356,11 +357,11 @@ bool SDLDisplay::getKey(const SDL_Event& sdlEvent, BzfKeyEvent& key, const char 
     }
 
     key.shift = 0;
-    if (mod & KMOD_SHIFT)
+    if (mod & SDL_KMOD_SHIFT)
         key.shift |= BzfKeyEvent::ShiftKey;
-    if (mod & KMOD_CTRL)
+    if (mod & SDL_KMOD_CTRL)
         key.shift |= BzfKeyEvent::ControlKey;
-    if (mod & KMOD_ALT)
+    if (mod & SDL_KMOD_ALT)
         key.shift |= BzfKeyEvent::AltKey;
     return true;
 }
@@ -388,18 +389,18 @@ void SDLDisplay::getWindowSize(int& width, int& height)
 void SDLDisplay::getModState(bool &shift, bool &ctrl, bool &alt)
 {
     SDL_Keymod mode = SDL_GetModState();
-    shift       = ((mode & KMOD_SHIFT) != 0);
-    ctrl  = ((mode & KMOD_CTRL) != 0);
-    alt    = ((mode & KMOD_ALT) != 0);
+    shift       = ((mode & SDL_KMOD_SHIFT) != 0);
+    ctrl  = ((mode & SDL_KMOD_CTRL) != 0);
+    alt    = ((mode & SDL_KMOD_ALT) != 0);
 }
 
 
 bool SDLDisplay::setupEvent(BzfEvent& _event, const SDL_Event& event) const
 {
     SDL_Keymod mode = SDL_GetModState();
-    bool shift  = ((mode & KMOD_SHIFT) != 0);
-    bool ctrl   = ((mode & KMOD_CTRL) != 0);
-    bool alt    = ((mode & KMOD_ALT) != 0);
+    bool shift  = ((mode & SDL_KMOD_SHIFT) != 0);
+    bool ctrl   = ((mode & SDL_KMOD_CTRL) != 0);
+    bool alt    = ((mode & SDL_KMOD_ALT) != 0);
 
     // Specifically handle our custom mouse wheel event here to trigger a KeyUp event, fixing the
     // issue where MG would fire endlessly.
@@ -426,13 +427,16 @@ bool SDLDisplay::setupEvent(BzfEvent& _event, const SDL_Event& event) const
     switch (event.type)
     {
 
-    case SDL_MOUSEMOTION:
+    case SDL_EVENT_MOUSE_MOTION:
         _event.type = BzfEvent::MouseMove;
-        _event.mouseMove.x = event.motion.x;
-        _event.mouseMove.y = event.motion.y;
+        _event.mouseMove.x = (int)event.motion.x;
+        _event.mouseMove.y = (int)event.motion.y;
         break;
 
-    case SDL_MOUSEWHEEL:
+    case SDL_EVENT_MOUSE_WHEEL:
+        if (event.wheel.integer_y == 0)
+            return false;
+
         _event.type   = BzfEvent::KeyDown;
         _event.keyDown.ascii = 0;
         _event.keyDown.shift = 0;
@@ -443,7 +447,7 @@ bool SDLDisplay::setupEvent(BzfEvent& _event, const SDL_Event& event) const
         if (alt)
             _event.keyDown.shift |= BzfKeyEvent::AltKey;
 
-        if (event.wheel.y < 0)
+        if (event.wheel.integer_y < 0)
             _event.keyDown.button = BzfKeyEvent::WheelDown;
         else
             _event.keyDown.button = BzfKeyEvent::WheelUp;
@@ -452,11 +456,11 @@ bool SDLDisplay::setupEvent(BzfEvent& _event, const SDL_Event& event) const
         SDL_Event fake;
         SDL_zero(fake);
         fake.type = mouseWheelStopEvent;
-        fake.user.code = (event.wheel.y < 0)?0:1;
+        fake.user.code = (event.wheel.integer_y < 0)?0:1;
         SDL_PushEvent(&fake);
         break;
 
-    case SDL_MOUSEBUTTONDOWN:
+    case SDL_EVENT_MOUSE_BUTTON_DOWN:
         _event.type   = BzfEvent::KeyDown;
         _event.keyDown.ascii = 0;
         _event.keyDown.shift = 0;
@@ -498,7 +502,7 @@ bool SDLDisplay::setupEvent(BzfEvent& _event, const SDL_Event& event) const
         }
         break;
 
-    case SDL_MOUSEBUTTONUP:
+    case SDL_EVENT_MOUSE_BUTTON_UP:
         _event.type = BzfEvent::KeyUp;
         _event.keyUp.ascii = 0;
         _event.keyUp.shift = 0;
@@ -540,7 +544,7 @@ bool SDLDisplay::setupEvent(BzfEvent& _event, const SDL_Event& event) const
         }
         break;
 
-    case SDL_KEYDOWN:
+    case SDL_EVENT_KEY_DOWN:
     {
         _event.type = BzfEvent::KeyDown;
 
@@ -549,7 +553,7 @@ bool SDLDisplay::setupEvent(BzfEvent& _event, const SDL_Event& event) const
         SDL_Event textInputEvent;
         SDL_PumpEvents();
 
-        if(SDL_PeepEvents(&textInputEvent, 1, SDL_PEEKEVENT, SDL_TEXTINPUT, SDL_TEXTINPUT) > 0)
+        if(SDL_PeepEvents(&textInputEvent, 1, SDL_PEEKEVENT, SDL_EVENT_TEXT_INPUT, SDL_EVENT_TEXT_INPUT) > 0)
             if (textInputEvent.text.text[0] >= '!' && textInputEvent.text.text[0] <= '~')
                 // on macOS with SDL 2, a text input event is generated for numpad keys
                 // regardless of whether numlock is on or off; the SDL team has determined
@@ -557,18 +561,18 @@ bool SDLDisplay::setupEvent(BzfEvent& _event, const SDL_Event& event) const
                 // those text input events
                 // original bug report: https://bugzilla.libsdl.org/show_bug.cgi?id=2886
 #ifdef __APPLE__
-                if ((event.key.keysym.mod & KMOD_NUM) || (
-                            event.key.keysym.sym != SDLK_KP_0 &&
-                            event.key.keysym.sym != SDLK_KP_1 &&
-                            event.key.keysym.sym != SDLK_KP_2 &&
-                            event.key.keysym.sym != SDLK_KP_3 &&
-                            event.key.keysym.sym != SDLK_KP_4 &&
-                            event.key.keysym.sym != SDLK_KP_5 &&
-                            event.key.keysym.sym != SDLK_KP_6 &&
-                            event.key.keysym.sym != SDLK_KP_7 &&
-                            event.key.keysym.sym != SDLK_KP_8 &&
-                            event.key.keysym.sym != SDLK_KP_9 &&
-                            event.key.keysym.sym != SDLK_KP_PERIOD))
+                if ((event.key.mod & SDL_KMOD_NUM) || (
+                            event.key.key != SDLK_KP_0 &&
+                            event.key.key != SDLK_KP_1 &&
+                            event.key.key != SDLK_KP_2 &&
+                            event.key.key != SDLK_KP_3 &&
+                            event.key.key != SDLK_KP_4 &&
+                            event.key.key != SDLK_KP_5 &&
+                            event.key.key != SDLK_KP_6 &&
+                            event.key.key != SDLK_KP_7 &&
+                            event.key.key != SDLK_KP_8 &&
+                            event.key.key != SDLK_KP_9 &&
+                            event.key.key != SDLK_KP_PERIOD))
 #endif // __APPLE
                     // we have a valid text input event following, so use that text for
                     // proper text case, symbol handling, etc.
@@ -580,68 +584,47 @@ bool SDLDisplay::setupEvent(BzfEvent& _event, const SDL_Event& event) const
         break;
     }
 
-    case SDL_KEYUP:
+    case SDL_EVENT_KEY_UP:
         _event.type = BzfEvent::KeyUp;
         if (!getKey(event, _event.keyUp))
             return false;
         break;
 
-    case SDL_QUIT:
+    case SDL_EVENT_QUIT:
         _event.type = BzfEvent::Quit;
         break;
 
-    case SDL_WINDOWEVENT:
-        switch (event.window.event)
-        {
 #ifdef __APPLE__
-        case SDL_WINDOWEVENT_MOVED:
+    case SDL_EVENT_WINDOW_MOVED:
+    {
+        // Work around a bug in SDL2 that was causing an offset viewport on macOS when restoring a fullscreen window
+        // running at a resolution different from the desktop resolution. The issue only occurred when clicking on
+        // the application icon, not the minimized window. The window moves to a negative position, so we'll
+        // detect that and toggle windowed/full screen to fix it.
+        SDL_Window *window = SDL_GetWindowFromID(event.window.windowID);
+        if ((event.window.data1 < 0 || event.window.data2 < 0) && SDL_GetWindowFlags(window) & SDL_WINDOW_FULLSCREEN)
         {
-            // Work around a bug in SDL2 that was causing an offset viewport on macOS when restoring a fullscreen window
-            // running at a resolution different from the desktop resolution. The issue only occurred when clicking on
-            // the application icon, not the minimized window. The window moves to a negative position, so we'll
-            // detect that and toggle windowed/full screen to fix it.
-            SDL_Window *window = SDL_GetWindowFromID(event.window.windowID);
-            if ((event.window.data1 < 0 || event.window.data2 < 0) && SDL_GetWindowFlags(window) & SDL_WINDOW_FULLSCREEN)
-            {
-                SDL_SetWindowFullscreen(window, 0);
-                SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
-            }
+            SDL_SetWindowFullscreen(window, false);
+            SDL_SetWindowFullscreen(window, true);
         }
         break;
+    }
 #endif
-        case SDL_WINDOWEVENT_RESIZED:
-            _event.type = BzfEvent::Resize;
-            _event.resize.width  = event.window.data1;
-            _event.resize.height = event.window.data2;
-            break;
-        case SDL_WINDOWEVENT_EXPOSED:
-            _event.type = BzfEvent::Redraw;
-            break;
-        case SDL_WINDOWEVENT_HIDDEN:
-        case SDL_WINDOWEVENT_MINIMIZED:
-            _event.type = BzfEvent::Unmap;
-            break;
-        case SDL_WINDOWEVENT_SHOWN:
-        case SDL_WINDOWEVENT_RESTORED:
-            _event.type = BzfEvent::Map;
-            break;
-#ifdef SDL_WINDOW_MOUSE_CAPTURE
-        case SDL_WINDOWEVENT_FOCUS_GAINED:
-        {
-            // make sure the mouse is captured in case the cursor is (or moves) outside the window
-            SDL_Window* windowId = SDL_GL_GetCurrentWindow();
-            if (windowId)
-            {
-                Uint32 currentWindowFlags = SDL_GetWindowFlags(windowId);
-                if (! (currentWindowFlags & SDL_WINDOW_MOUSE_CAPTURE))
-                    SDL_CaptureMouse(SDL_TRUE);
-            }
-            break;
-        }
-#endif
-        default:
-            break;
-        }
+    case SDL_EVENT_WINDOW_RESIZED:
+        _event.type = BzfEvent::Resize;
+        _event.resize.width  = event.window.data1;
+        _event.resize.height = event.window.data2;
+        break;
+    case SDL_EVENT_WINDOW_EXPOSED:
+        _event.type = BzfEvent::Redraw;
+        break;
+    case SDL_EVENT_WINDOW_HIDDEN:
+    case SDL_EVENT_WINDOW_MINIMIZED:
+        _event.type = BzfEvent::Unmap;
+        break;
+    case SDL_EVENT_WINDOW_SHOWN:
+    case SDL_EVENT_WINDOW_RESTORED:
+        _event.type = BzfEvent::Map;
         break;
 
     default:

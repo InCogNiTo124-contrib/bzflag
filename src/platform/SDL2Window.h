@@ -28,9 +28,6 @@
 // Local includes
 #include "SDL2Display.h"
 #include "SDL2Visual.h"
-#ifdef _WIN32
-#  include "SDL2/SDL_syswm.h"
-#endif
 
 class SDLWindow final : public BzfWindow
 {
@@ -80,9 +77,18 @@ public:
     {
         ;
     };
-    void  setGamma(float newGamma) override;
-    float getGamma() const override;
-    bool  hasGammaControl() const override;
+    void  setGamma(float) override
+    {
+        ;
+    };
+    float getGamma() const override
+    {
+        return 1.0f;
+    };
+    bool  hasGammaControl() const override
+    {
+        return false;
+    };
     bool hasVerticalSync() const override
     {
         return true;
@@ -100,12 +106,8 @@ public:
     }
 #endif
 private:
-    bool   hasGamma;
-    float  origGamma;
-    float  lastGamma;
     SDL_Window *windowId;
 #ifdef _WIN32
-    SDL_SysWMinfo info;
     static HWND hwnd;
 #endif
     SDL_GLContext glContext;

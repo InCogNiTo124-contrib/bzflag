@@ -14,6 +14,7 @@
 
 #include <stdlib.h>
 #include <string>
+#include <vector>
 #include <sys/types.h>
 #include <sys/stat.h>
 #ifdef _WIN32
@@ -37,14 +38,13 @@ static const int defaultAudioRate=22050;
 //
 
 SDLMedia::SDLMedia() : BzfMedia(),
+    audioReady(false),
     audioOutputRate(),
-    outputBufferEmpty(),
     cmdQueue(),
-    userCallback()
+    cmdFill(0),
+    userCallback(),
+    audioStream(nullptr)
 {
-    cmdFill       = 0;
-    audioReady    = false;
-    convert.buf   = 0;
 }
 
 void SDLMedia::setMediaDirectory(const std::string& _dir)
@@ -108,76 +108,47 @@ bool            SDLMedia::openAudio()
     // don't re-initialize
     if (audioReady) return false;
 
-    if (SDL_InitSubSystem(SDL_INIT_AUDIO) == -1)
+    if (!SDL_InitSubSystem(SDL_INIT_AUDIO))
     {
         printFatalError("Could not initialize SDL-Audio: %s.\n", SDL_GetError());
         exit(-1);
     };
 
-    static SDL_AudioSpec desired;
-    static SDL_AudioSpec obtained;
-
     // what the frequency?
     audioOutputRate = defaultAudioRate;
 
-    // how big a fragment to use?  we want to hold at around 1/10th of
-    // a second.
-    // probably SDL is using multiple buffering, make it a 3rd
-    int fragmentSize = (int)(0.03f * (float)audioOutputRate);
-    int n;
+    SDL_AudioSpec spec;
+    SDL_zero(spec);
+    spec.format = SDL_AUDIO_S16;
+    spec.channels = 2;
+    spec.freq = audioOutputRate;
 
-    n = 0;
-    while ((1 << n) < fragmentSize)
-        ++n;
-
-    desired.freq       = audioOutputRate;
-    desired.format     = AUDIO_S16SYS;
-    desired.channels   = 2;
-    desired.samples    = 1 << n; // In stereo samples
-    desired.callback   = &fillAudioWrapper;
-    desired.userdata   = (void *) this;   // To handle Wrap of func
-
-    /* Open the audio device */
-    if (SDL_OpenAudio(&desired, &obtained) < 0)
+    SDL_AudioDeviceID devId = SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK;
+    if (!audioDevice.empty())
     {
-        fprintf(stderr, "Couldn't open audio: %s\n", SDL_GetError());
-        return false;
-    }
-    if (audioOutputRate != obtained.freq)
-    {
-        SDL_CloseAudio();
-        audioOutputRate = obtained.freq;
-        fragmentSize    = (int)(0.03f * (float)audioOutputRate);
-
-        n = 0;
-        while ((1 << n) < fragmentSize)
-            ++n;
-
-        desired.freq       = audioOutputRate;
-        desired.samples    = 1 << n;
-        /* Open the audio device */
-        if (SDL_OpenAudio(&desired, &obtained) < 0)
+        int count = 0;
+        SDL_AudioDeviceID *devs = SDL_GetAudioPlaybackDevices(&count);
+        if (devs)
         {
-            fprintf(stderr, "Couldn't open audio: %s\n", SDL_GetError());
-            return false;
+            for (int i = 0; i < count; i++)
+            {
+                const char *name = SDL_GetAudioDeviceName(devs[i]);
+                if (name && (audioDevice == name || strcasecmp(audioDevice.c_str(), name) == 0))
+                {
+                    devId = devs[i];
+                    break;
+                }
+            }
+            SDL_free(devs);
         }
     }
-    audioOutputRate = obtained.freq;
-    if (SDL_BuildAudioCVT
-            (&convert,
-             desired.format, desired.channels, obtained.freq,
-             obtained.format, obtained.channels, obtained.freq) == -1)
+
+    audioStream = SDL_OpenAudioDeviceStream(devId, &spec, &fillAudioWrapper, this);
+    if (!audioStream)
     {
-        /* Check that the convert was built */
-        printFatalError("Could not build converter for audio ", SDL_GetError());
-        closeAudio();
+        fprintf(stderr, "Couldn't open audio stream: %s\n", SDL_GetError());
         return false;
     }
-    convert.len = (int)((double)obtained.size / convert.len_ratio);
-    convert.buf = (Uint8 *)malloc(convert.len * convert.len_mult);
-
-    // make an output buffer
-    outputBufferEmpty = true;
 
     // ready to go
     audioReady = true;
@@ -187,12 +158,11 @@ bool            SDLMedia::openAudio()
 
 void            SDLMedia::closeAudio()
 {
-    // Stop Audio to avoid callback
-    SDL_PauseAudio(1);
-
-    SDL_CloseAudio();
-    free(convert.buf);
-    convert.buf = 0;
+    if (audioStream)
+    {
+        SDL_DestroyAudioStream(audioStream);
+        audioStream = nullptr;
+    }
     SDL_QuitSubSystem(SDL_INIT_AUDIO);
     audioReady    = false;
 }
@@ -201,14 +171,16 @@ void            SDLMedia::startAudioCallback(bool (*proc)(void))
 {
     userCallback = proc;
     // Stop sending silence and start calling audio callback
-    SDL_PauseAudio(0);
+    if (audioStream)
+        SDL_ResumeAudioStreamDevice(audioStream);
 }
 
 void            SDLMedia::writeSoundCommand(const void* cmd, int len)
 {
     if (!audioReady) return;
 
-    SDL_LockAudio();
+    if (audioStream)
+        SDL_LockAudioStream(audioStream);
 
     // Discard command if full
     if ((cmdFill + len) < 2048)
@@ -219,7 +191,8 @@ void            SDLMedia::writeSoundCommand(const void* cmd, int len)
         cmdFill += len;
     }
 
-    SDL_UnlockAudio();
+    if (audioStream)
+        SDL_UnlockAudioStream(audioStream);
 }
 
 bool            SDLMedia::readSoundCommand(void* cmd, int len)
@@ -244,122 +217,96 @@ int         SDLMedia::getAudioOutputRate() const
 
 int         SDLMedia::getAudioBufferSize() const
 {
-    return convert.len >> 1;
+    return 1024;
 }
 
 int         SDLMedia::getAudioBufferChunkSize() const
 {
-    return convert.len >> 2;
+    return 512;
 }
 
-void SDLMedia::fillAudio (Uint8 * stream, int len)
+void SDLMedia::fillAudio(int additional_amount)
 {
-    static int sampleToSend;  // next sample to send on output buffer
-    if (outputBufferEmpty)
+    if (!userCallback || !audioStream)
+        return;
+    const int bytesPerChunk = getAudioBufferSize() * sizeof(int16_t);
+    while (additional_amount > 0)
     {
         userCallback();
-        sampleToSend = 0;
+        additional_amount -= bytesPerChunk;
     }
-
-    int transferSize = convert.len_cvt - sampleToSend;
-    if (transferSize > len)
-    {
-        transferSize = len;
-        outputBufferEmpty = false;
-    }
-    else
-        outputBufferEmpty = true;
-
-    // just copying into the soundBuffer is enough, SDL is looking for
-    // something different from silence sample
-    memcpy(stream, convert.buf + sampleToSend, transferSize);
-    sampleToSend += transferSize;
 }
 
-void SDLMedia::fillAudioWrapper (void * userdata, Uint8 * stream, int len)
+void SDLCALL SDLMedia::fillAudioWrapper(void *userdata, SDL_AudioStream *, int additional_amount, int)
 {
-    SDLMedia * me = (SDLMedia *) userdata;
-    me->fillAudio(stream, len);
+    SDLMedia *me = static_cast<SDLMedia *>(userdata);
+    me->fillAudio(additional_amount);
 }
 
-void SDLMedia::writeAudioFrames(const float* samples, int)
+void SDLMedia::writeAudioFrames(const float* samples, int numFrames)
 {
-    int    audioBufferSize = convert.len >> 1;
-    short *buffer   = (short *)convert.buf;
-
-    for (int j = 0; j < audioBufferSize; j++)
+    if (!audioStream || numFrames <= 0)
+        return;
+    const int numSamples = numFrames * 2;
+    std::vector<int16_t> buffer(numSamples);
+    for (int j = 0; j < numSamples; j++)
     {
-        if (samples[j] < -32767.0)
+        if (samples[j] < -32767.0f)
             buffer[j] = -32767;
-        else if (samples[j] > 32767.0)
+        else if (samples[j] > 32767.0f)
             buffer[j] = 32767;
         else
-            buffer[j] = short(samples[j]);
+            buffer[j] = static_cast<int16_t>(samples[j]);
     }
-    SDL_ConvertAudio(&convert);
+    SDL_PutAudioStreamData(audioStream, buffer.data(), numSamples * sizeof(int16_t));
 }
 
 // Setting Audio Driver
 void    SDLMedia::setDriver(std::string driverName)
 {
-    static char envAssign[256];
-    std::string envVar = "SDL_AUDIODRIVER=" + driverName;
-    strncpy(envAssign, envVar.c_str(), 255);
-    envAssign[255]     = '\0';
-    putenv(envAssign);
+    SDL_SetHint(SDL_HINT_AUDIO_DRIVER, driverName.c_str());
 }
 
 // Setting Audio Device
 void    SDLMedia::setDevice(std::string deviceName)
 {
-    static char envAssign[256];
-    std::string envVar = "AUDIODEV=" + deviceName;
-    strncpy(envAssign, envVar.c_str(), 255);
-    envAssign[255]     = '\0';
-    putenv(envAssign);
+    audioDevice = std::move(deviceName);
 }
 
 float*      SDLMedia::doReadSound(const std::string &filename, int &numFrames,
                                   int &rate) const
 {
     SDL_AudioSpec wav_spec;
-    Uint32    wav_length;
-    Uint8 *wav_buffer;
-    int      ret;
-    SDL_AudioCVT  wav_cvt;
-    int16_t      *cvt16;
-    int      i;
+    Uint32 wav_length = 0;
+    Uint8 *wav_buffer = nullptr;
 
-    float *data;
-    rate  = defaultAudioRate;
+    rate = defaultAudioRate;
     if (!SDL_LoadWAV(filename.c_str(), &wav_spec, &wav_buffer, &wav_length))
         return NULL;
 
-    /* Build AudioCVT */
-    ret = SDL_BuildAudioCVT(&wav_cvt,
-                            wav_spec.format, wav_spec.channels, wav_spec.freq,
-                            AUDIO_S16SYS, 2, audioOutputRate);
-    /* Check that the convert was built */
-    if (ret == -1)
+    SDL_AudioSpec target_spec;
+    SDL_zero(target_spec);
+    target_spec.format = SDL_AUDIO_S16;
+    target_spec.channels = 2;
+    target_spec.freq = audioOutputRate > 0 ? audioOutputRate : defaultAudioRate;
+
+    Uint8 *cvt_buf = nullptr;
+    int cvt_len = 0;
+    if (!SDL_ConvertAudioSamples(&wav_spec, wav_buffer, (int)wav_length, &target_spec, &cvt_buf, &cvt_len))
     {
-        printFatalError("Could not build converter for Wav file %s: %s.\n",
+        printFatalError("Could not convert Wav file %s: %s.\n",
                         filename.c_str(), SDL_GetError());
-        SDL_FreeWAV(wav_buffer);
+        SDL_free(wav_buffer);
         return NULL;
     }
-    /* Setup for conversion */
-    wav_cvt.buf = (Uint8*)malloc(wav_length * wav_cvt.len_mult);
-    wav_cvt.len = wav_length;
-    memcpy(wav_cvt.buf, wav_buffer, wav_length);
-    /* And now we're ready to convert */
-    SDL_ConvertAudio(&wav_cvt);
-    numFrames = (int)(wav_length * wav_cvt.len_ratio / 4);
-    cvt16     = (int16_t *)wav_cvt.buf;
-    data      = new float[numFrames * 2];
-    for (i = 0; i < numFrames * 2; i++)
+    SDL_free(wav_buffer);
+
+    numFrames = cvt_len / 4;
+    const int16_t *cvt16 = reinterpret_cast<const int16_t *>(cvt_buf);
+    float *data = new float[numFrames * 2];
+    for (int i = 0; i < numFrames * 2; i++)
         data[i] = cvt16[i];
-    free(wav_cvt.buf);
-    SDL_FreeWAV(wav_buffer);
+    SDL_free(cvt_buf);
     return data;
 }
 

@@ -51,7 +51,6 @@
 #cmakedefine HAVE_REGEX_H 1
 #cmakedefine HAVE_SCHED_H 1
 #define HAVE_SCHED_SETAFFINITY 1
-#cmakedefine HAVE_SDL2_SDL_H 1
 #define HAVE_SELECT 1
 #define HAVE_SOCKLEN_T 1
 #define HAVE_STDINT_H 1

@@ -63,15 +63,12 @@ public:
     void        audioDriver(std::string& driverName) override;
 
 private:
-    void        fillAudio (Uint8 *, int);
-    static void  fillAudioWrapper (void *, Uint8 *, int);
-    bool        tooEmpty() const;
+    void        fillAudio(int additional_amount);
+    static void SDLCALL fillAudioWrapper(void *userdata, SDL_AudioStream *stream, int additional_amount, int total_amount);
 
 private:
     bool        audioReady;
     int         audioOutputRate;
-
-    bool        outputBufferEmpty;
 
     Uint64      stopwatchTime;
 
@@ -79,7 +76,8 @@ private:
     int      cmdFill;   // from 0 to cmdFill
 
     bool        (*userCallback)(void);
-    SDL_AudioCVT    convert;
+    SDL_AudioStream* audioStream;
+    std::string audioDevice;
 };
 
 #endif // BZF_SDLMEDIA_H

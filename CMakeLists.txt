@@ -81,8 +81,7 @@ endif()
 if(BUILD_CLIENT)
   find_package(OpenGL REQUIRED)
   find_package(GLEW REQUIRED)
-  find_package(SDL2 REQUIRED)
-  set(HAVE_SDL2_SDL_H 1)
+  find_package(SDL3 3.2.12 CONFIG REQUIRED)
 endif()
 
 if(BUILD_TOOLS)
@@ -121,9 +120,6 @@ if(MINIUPNPC_INCLUDE_DIR)
 endif()
 if(CURSES_FOUND)
   include_directories(${CURSES_INCLUDE_DIRS})
-endif()
-if(BUILD_CLIENT)
-  include_directories(${SDL2_INCLUDE_DIRS})
 endif()
 
 add_compile_definitions(
@@ -257,7 +253,7 @@ add_library(libPlatform STATIC
   src/platform/SDL2Visual.cxx
   src/platform/SDL2Window.cxx
 )
-target_link_libraries(libPlatform PUBLIC SDL2::SDL2)
+target_link_libraries(libPlatform PUBLIC SDL3::SDL3)
 if(APPLE)
   target_sources(libPlatform PRIVATE src/platform/MacDataPath.cxx)
   target_link_libraries(libPlatform PUBLIC "-framework CoreFoundation")
@@ -273,7 +269,7 @@ add_library(libGLKit STATIC
   src/ogl/OpenGLUtils.cxx
   src/ogl/RenderNode.cxx
 )
-target_link_libraries(libGLKit PUBLIC OpenGL::GL OpenGL::GLU GLEW::GLEW SDL2::SDL2)
+target_link_libraries(libGLKit PUBLIC OpenGL::GL OpenGL::GLU GLEW::GLEW SDL3::SDL3)
 
 add_library(lib3D STATIC
   src/3D/FontManager.cxx
@@ -454,7 +450,7 @@ target_link_libraries(bzflag PRIVATE
   PkgConfig::CARES
   PNG::PNG
   ZLIB::ZLIB
-  SDL2::SDL2
+  SDL3::SDL3
   OpenGL::GL
   OpenGL::GLU
   GLEW::GLEW

@@ -22,7 +22,7 @@ HWND SDLWindow::hwnd = NULL;
 #endif
 
 SDLWindow::SDLWindow(const SDLDisplay* _display, SDLVisual*)
-    : BzfWindow(_display), hasGamma(true), origGamma(-1.0f), lastGamma(1.0f),
+    : BzfWindow(_display),
       windowId(NULL), glContext(NULL), canGrabMouse(true), fullScreen(false),
       vsync(false), base_width(640), base_height(480), min_width(-1), min_height(-1)
 {
@@ -30,9 +30,6 @@ SDLWindow::SDLWindow(const SDLDisplay* _display, SDLVisual*)
 
 SDLWindow::~SDLWindow()
 {
-    // Restore the original gamma when we exit the client
-    setGamma(origGamma);
-
     if (windowId != NULL)
         SDL_DestroyWindow(windowId);
 }
@@ -58,7 +55,7 @@ void SDLWindow::iconify(void)
 void SDLWindow::disableConfineToMotionbox()
 {
 #ifndef _WIN32
-    SDL_SetWindowGrab(windowId, SDL_FALSE);
+    SDL_SetWindowMouseGrab(windowId, false);
 #else
     ClipCursor(NULL);
 #endif
@@ -78,8 +75,8 @@ void SDLWindow::confineToMotionbox(int x1, int y1, int x2, int y2)
 #endif
 
 #ifndef _WIN32
-    if (! SDL_GetWindowGrab(windowId))
-        SDL_SetWindowGrab(windowId, SDL_TRUE);
+    if (!SDL_GetWindowMouseGrab(windowId))
+        SDL_SetWindowMouseGrab(windowId, true);
 
     BzfWindow::confineToMotionbox(x1, y1, x2, y2);
 #else
@@ -101,12 +98,15 @@ void SDLWindow::confineToMotionbox(int x1, int y1, int x2, int y2)
 
 void SDLWindow::warpMouse(int _x, int _y)
 {
-    SDL_WarpMouseInWindow(windowId, _x, _y);
+    SDL_WarpMouseInWindow(windowId, (float)_x, (float)_y);
 }
 
 void SDLWindow::getMouse(int& _x, int& _y) const
 {
-    SDL_GetMouseState(&_x, &_y);
+    float mx = 0.0f, my = 0.0f;
+    SDL_GetMouseState(&mx, &my);
+    _x = (int)mx;
+    _y = (int)my;
 }
 
 void SDLWindow::setSize(int _width, int _height)
@@ -139,27 +139,6 @@ void SDLWindow::getSize(int& width, int& height) const
     }
 }
 
-void SDLWindow::setGamma(float gamma)
-{
-    lastGamma = gamma;
-    int result = SDL_SetWindowBrightness(windowId, gamma);
-    if (result == -1)
-    {
-        printf("Could not set Gamma: %s.\n", SDL_GetError());
-        hasGamma = false;
-    }
-}
-
-float SDLWindow::getGamma() const
-{
-    return SDL_GetWindowBrightness(windowId);
-}
-
-bool SDLWindow::hasGammaControl() const
-{
-    return hasGamma;
-}
-
 void SDLWindow::swapBuffers()
 {
     SDL_GL_SwapWindow(windowId);
@@ -169,13 +148,14 @@ void SDLWindow::swapBuffers()
     // bug report: https://bugzilla.libsdl.org/show_bug.cgi?id=2998
     // TODO: Remove this workaround when/if SDL2 includes their own workaround.
 #ifdef __APPLE__
-    if (! SDL_GL_GetSwapInterval())
+    int interval = 0;
+    if (!SDL_GL_GetSwapInterval(&interval) || interval == 0)
         return;
 
     int maxRunawayFPS = 65;
-    SDL_DisplayMode desktopDisplayMode;
-    if (SDL_GetDesktopDisplayMode(0, &desktopDisplayMode) == 0)
-        maxRunawayFPS = desktopDisplayMode.refresh_rate + 5;
+    const SDL_DisplayMode *desktopDisplayMode = SDL_GetDesktopDisplayMode(SDL_GetPrimaryDisplay());
+    if (desktopDisplayMode && desktopDisplayMode->refresh_rate > 0.0f)
+        maxRunawayFPS = (int)desktopDisplayMode->refresh_rate + 5;
 
     static TimeKeeper lastFrame = TimeKeeper::getSunGenesisTime();
     const TimeKeeper now = TimeKeeper::getCurrent();
@@ -198,20 +178,20 @@ void SDLWindow::swapBuffers()
 // to windowed mode. This function is called to filter SDL window resize events in either of these scenarios to either
 // adjust the resolution to the correct one (in the Linux scenario) or discard the event (in the macOS scenario).
 #if defined(__linux__) || defined(__APPLE__)
-int SDLWindowEventFilter(void *resolution, SDL_Event *event)
+bool SDLCALL SDLWindowEventFilter(void *resolution, SDL_Event *event)
 {
-    if(! resolution)
-        return 0; // drop the event
+    if (!resolution)
+        return false; // drop the event
 
-    if(event->type == SDL_WINDOWEVENT && (event->window.event == SDL_WINDOWEVENT_RESIZED ||
-                                          event->window.event == SDL_WINDOWEVENT_SIZE_CHANGED))
+    if (event->type == SDL_EVENT_WINDOW_RESIZED ||
+        event->type == SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED)
     {
         // adjust the window resolution to match the values passed to us
         event->window.data1 = static_cast<int *>(resolution)[0];
         event->window.data2 = static_cast<int *>(resolution)[1];
     }
 
-    return 1; // allow the event
+    return true; // allow the event
 }
 #endif // __linux__ || __APPLE__
 
@@ -219,9 +199,9 @@ bool SDLWindow::create(void)
 {
     int targetWidth, targetHeight;
     getSize(targetWidth, targetHeight);
-    SDL_bool windowWasGrabbed = SDL_FALSE;
+    bool windowWasGrabbed = false;
     if (windowId != NULL)
-        windowWasGrabbed = SDL_GetWindowGrab(windowId);
+        windowWasGrabbed = SDL_GetWindowMouseGrab(windowId);
 
     // if we have an existing identical window, go no further
     if (windowId != NULL)
@@ -229,8 +209,8 @@ bool SDLWindow::create(void)
         int currentWidth, currentHeight;
         SDL_GetWindowSize(windowId, &currentWidth, &currentHeight);
 
-        Uint32 priorWindowFlags = SDL_GetWindowFlags(windowId);
-        if (fullScreen == (priorWindowFlags & SDL_WINDOW_FULLSCREEN) &&
+        SDL_WindowFlags priorWindowFlags = SDL_GetWindowFlags(windowId);
+        if (fullScreen == ((priorWindowFlags & SDL_WINDOW_FULLSCREEN) != 0) &&
                 targetWidth == currentWidth && targetHeight == currentHeight)
             return true;
     }
@@ -239,7 +219,7 @@ bool SDLWindow::create(void)
     if (windowId != NULL)
     {
         if (glContext)
-            SDL_GL_DeleteContext(glContext);
+            SDL_GL_DestroyContext(glContext);
         glContext = NULL;
 
         SDL_DestroyWindow(windowId);
@@ -251,12 +231,6 @@ bool SDLWindow::create(void)
     SDL_FilterEvents(&SDLWindowEventFilter, nullptr);
 #endif // __APPLE__
 
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
-    SDL_GL_SetAttribute(
-        SDL_GL_CONTEXT_PROFILE_MASK,
-        SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
-
     // (re)create the window
 
     // workaround for an SDL 2 bug on Linux with the GNOME Window List extension enabled, where attempting to create a
@@ -264,18 +238,26 @@ bool SDLWindow::create(void)
     // causes an infinite loop of window creation on the secondary display
     // bug report: https://bugzilla.libsdl.org/show_bug.cgi?id=4990
 #ifdef __linux__
-    if(! fullScreen || SDL_GetNumVideoDisplays() < 2) // create the window with the standard logic
+    int numDisplays = 0;
+    SDL_DisplayID *displays = SDL_GetDisplays(&numDisplays);
+    if (displays)
+        SDL_free(displays);
+    if (!fullScreen || numDisplays < 2) // create the window with the standard logic
     {
 #endif // __linux__
         windowId = SDL_CreateWindow(
                        title.c_str(),
-                       SDL_WINDOWPOS_UNDEFINED,
-                       SDL_WINDOWPOS_UNDEFINED,
                        targetWidth,
                        targetHeight,
                        SDL_WINDOW_OPENGL |
                        (fullScreen ? SDL_WINDOW_FULLSCREEN : SDL_WINDOW_RESIZABLE) |
-                       (windowWasGrabbed ? SDL_WINDOW_INPUT_GRABBED : 0));
+                       (windowWasGrabbed ? SDL_WINDOW_MOUSE_GRABBED : 0));
+        if (windowId && fullScreen)
+        {
+            SDL_DisplayMode closestMode;
+            if (SDL_GetClosestFullscreenDisplayMode(SDL_GetPrimaryDisplay(), targetWidth, targetHeight, 0.0f, true, &closestMode))
+                SDL_SetWindowFullscreenMode(windowId, &closestMode);
+        }
 
         // continuation of above workaround
 #ifdef __linux__
@@ -284,28 +266,35 @@ bool SDLWindow::create(void)
     {
         windowId = SDL_CreateWindow(
                        title.c_str(),
-                       SDL_WINDOWPOS_UNDEFINED,
-                       SDL_WINDOWPOS_UNDEFINED,
                        base_width,
                        base_height,
-                       SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | (windowWasGrabbed ? SDL_WINDOW_INPUT_GRABBED : 0));
+                       SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | (windowWasGrabbed ? SDL_WINDOW_MOUSE_GRABBED : 0));
+        if (!windowId)
+        {
+            printf("Could not set Video Mode: %s.\n", SDL_GetError());
+            return false;
+        }
 
-        SDL_DisplayMode displayMode;
-        if(SDL_GetDesktopDisplayMode(0, &displayMode) < 0)
+        SDL_DisplayMode closestMode;
+        if (!SDL_GetClosestFullscreenDisplayMode(SDL_GetPrimaryDisplay(), targetWidth, targetHeight, 0.0f, true, &closestMode))
         {
-            printf("Unable to get desktop display mode: %s", SDL_GetError());
+            printf("Unable to get fullscreen display mode: %s\n", SDL_GetError());
+            SDL_DestroyWindow(windowId);
+            windowId = NULL;
             return false;
         }
-        displayMode.w = targetWidth;
-        displayMode.h = targetHeight;
-        if(SDL_SetWindowDisplayMode(windowId, &displayMode))
+        if (!SDL_SetWindowFullscreenMode(windowId, &closestMode))
         {
-            printf("Unable to set display mode: %s", SDL_GetError());
+            printf("Unable to set display mode: %s\n", SDL_GetError());
+            SDL_DestroyWindow(windowId);
+            windowId = NULL;
             return false;
         }
-        if(SDL_SetWindowFullscreen(windowId, SDL_WINDOW_FULLSCREEN) < 0)
+        if (!SDL_SetWindowFullscreen(windowId, true))
         {
-            printf("Unable to set window to fullscreen mode: %s", SDL_GetError());
+            printf("Unable to set window to fullscreen mode: %s\n", SDL_GetError());
+            SDL_DestroyWindow(windowId);
+            windowId = NULL;
             return false;
         }
     }
@@ -350,9 +339,8 @@ bool SDLWindow::create(void)
         SDL_Event fakeResizeEvent;
         SDL_zero(fakeResizeEvent);
 
-        fakeResizeEvent.window.type = SDL_WINDOWEVENT;
+        fakeResizeEvent.type = SDL_EVENT_WINDOW_RESIZED;
         fakeResizeEvent.window.windowID = 0; // deliberately not matching SDL_GetWindowID() so SDL doesn't purge event
-        fakeResizeEvent.window.event = SDL_WINDOWEVENT_RESIZED;
         fakeResizeEvent.window.data1 = currentWidth;
         fakeResizeEvent.window.data2 = currentHeight;
 
@@ -360,20 +348,8 @@ bool SDLWindow::create(void)
     }
 #endif // __APPLE__
 
-    // Store the gamma immediately after creating the first window
-    if (origGamma < 0)
-        origGamma = getGamma();
-
-    // At least on Windows, recreating the window resets the gamma, so set it
-    setGamma(lastGamma);
-
 #ifdef _WIN32
-    SDL_VERSION(&info.version);
-    if (SDL_GetWindowWMInfo(windowId,&info))
-    {
-        if (info.subsystem == SDL_SYSWM_WINDOWS)
-            hwnd = info.info.win.window;
-    }
+    hwnd = (HWND)SDL_GetPointerProperty(SDL_GetWindowProperties(windowId), SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
 #endif
 
     if (!windowId)
@@ -382,13 +358,15 @@ bool SDLWindow::create(void)
         return false;
     }
 
+    SDL_StartTextInput(windowId);
+
     if (min_width >= 0)
         setMinSize(min_width, min_height);
 
     makeContext();
     makeCurrent();
 
-    if(SDL_GL_SetSwapInterval(vsync ? -1 : 0) == -1 && vsync)
+    if (!SDL_GL_SetSwapInterval(vsync ? -1 : 0) && vsync)
         // no adaptive vsync; set regular vsync
         SDL_GL_SetSwapInterval(1);
 
@@ -401,10 +379,7 @@ bool SDLWindow::create(void)
 void SDLWindow::enableGrabMouse(bool on)
 {
     canGrabMouse = on;
-    if (canGrabMouse)
-        SDL_SetWindowGrab(windowId, SDL_TRUE);
-    else
-        SDL_SetWindowGrab(windowId, SDL_FALSE);
+    SDL_SetWindowMouseGrab(windowId, canGrabMouse);
 }
 
 void SDLWindow::makeContext()
@@ -420,7 +395,7 @@ void SDLWindow::setVerticalSync(bool setting)
 
     if (windowId != NULL)
         if (glContext != NULL)
-            if(SDL_GL_SetSwapInterval(vsync ? -1 : 0) == -1 && vsync)
+            if (!SDL_GL_SetSwapInterval(vsync ? -1 : 0) && vsync)
                 // no adaptive vsync; set regular vsync
                 SDL_GL_SetSwapInterval(1);
 }
@@ -440,8 +415,7 @@ void SDLWindow::makeCurrent()
         return;
     if (!glContext)
         return;
-    int result = SDL_GL_MakeCurrent(windowId, glContext);
-    if (result < 0)
+    if (!SDL_GL_MakeCurrent(windowId, glContext))
     {
         printf("Could not Make GL Context Current: %s.\n", SDL_GetError());
         abort();
@@ -450,7 +424,7 @@ void SDLWindow::makeCurrent()
 
 void SDLWindow::freeContext()
 {
-    SDL_GL_DeleteContext(glContext);
+    SDL_GL_DestroyContext(glContext);
 }
 
 // Local Variables: ***
