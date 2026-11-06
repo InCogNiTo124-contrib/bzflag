@@ -88,21 +88,8 @@ extern "C" {
 
 // Posix defines the socket API to use socklen_t
 using AddrLen = socklen_t;
-
-# if defined(sun)
-/* setsockopt prototypes the 4th arg as const char*. */
-using SSOType = char const*;
-/* connect prototypes the 2nd arg without const */
-using CNCTType = sockaddr; // only appears used in bzadmin
-# else
 using SSOType  = void const*;
 using CNCTType = sockaddr const; // only appears used in bzadmin
-# endif
-
-// BeOS net_server has closesocket(), which _must_ be used in place of close()
-# if defined(__BEOS__) && (IPPROTO_TCP != 6)
-#  define close(__x) closesocket(__x)
-# endif
 
 // This is extremely questionable. herror() is defined in netdb.h for Linux
 // and in winsock2.h for Windows. Of course, it's deprecated (at least for Linux)

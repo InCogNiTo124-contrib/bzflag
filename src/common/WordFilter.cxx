@@ -73,13 +73,6 @@ bool WordFilter::simpleFilter(char *input) const
 
 bool WordFilter::aggressiveFilter(char *input) const
 {
-#if  !defined(HAVE_REGEX_H)
-
-    std::cerr << "Regular expressions are not available (using the simple filter)" << std::endl;
-    return simpleFilter(input);
-
-#else /* HAVE_REGEX_H */
-
     bool filtered = false;
     regmatch_t match[1];
     if (input == NULL) return false;
@@ -137,7 +130,7 @@ bool WordFilter::aggressiveFilter(char *input) const
      */
     for (ExpCompareSet::const_iterator i = prefixes.begin(); i != prefixes.end(); ++i)
     {
-        if (regexec(i->compiled, sInput.c_str(), 1, match, 0) == 0)
+        if (regexec(i->compiled.get(), sInput.c_str(), 1, match, 0) == 0)
         {
             if ( (match[0].rm_eo < inputLength) && isalpha(sInput[match[0].rm_eo]) )
             {
@@ -174,7 +167,7 @@ bool WordFilter::aggressiveFilter(char *input) const
             {
                 matched = false;
 
-                regCode = regexec(i->compiled, sInput.c_str(), 1, match, 0);
+                regCode = regexec(i->compiled.get(), sInput.c_str(), 1, match, 0);
 
 //std::cout << "input is [" << sInput << "]" << std::endl;
 
@@ -196,7 +189,7 @@ bool WordFilter::aggressiveFilter(char *input) const
                         for (ExpCompareSet::const_iterator k = prefixes.begin();
                                 k != prefixes.end(); ++k)
                         {
-                            if (regexec(k->compiled, sInput.c_str(), 1, match, 0) == 0)
+                            if (regexec(k->compiled.get(), sInput.c_str(), 1, match, 0) == 0)
                             {
 
 //std::cout << "checking prefix: " << k->word << std::endl;
@@ -239,7 +232,7 @@ bool WordFilter::aggressiveFilter(char *input) const
                         {
 //std::cout << "checking " << k->word << " against [" << input + endOffset << "]" << std::endl;
 
-                            if (regexec(k->compiled, sInput.c_str() + endOffset, 1, match, 0) == 0)
+                            if (regexec(k->compiled.get(), sInput.c_str() + endOffset, 1, match, 0) == 0)
                             {
 
 //std::cout << "is " << match[0].rm_eo << " less than " << inputLength - endOffset << std::endl;
@@ -314,7 +307,7 @@ bool WordFilter::aggressiveFilter(char *input) const
                 else
                 {
                     char errorBuffer[256];
-                    regerror(regCode, i->compiled, errorBuffer, 256);
+                    regerror(regCode, i->compiled.get(), errorBuffer, 256);
                     std::cout << errorBuffer << std::endl;
 
                 } /* end if regcode */
@@ -345,19 +338,11 @@ bool WordFilter::aggressiveFilter(char *input) const
 
 
     return filtered;
-
-#endif /* HAVE_REGEX_H */
 } // end aggressiveFilter
 
 
 // provides a pointer to a fresh compiled expression for some given expression
-#if !defined(HAVE_REGEX_H)
-regex_t *WordFilter::getCompiledExpression(const std::string &) const
-{
-    return (regex_t *)NULL;
-}
-#else /* HAVE_REGEX_H */
-regex_t *WordFilter::getCompiledExpression(const std::string &word) const
+std::shared_ptr<regex_t> WordFilter::getCompiledExpression(const std::string &word) const
 {
     regex_t *compiledReg;
 
@@ -367,7 +352,7 @@ regex_t *WordFilter::getCompiledExpression(const std::string &word) const
 
         perror("calloc failed");
         std::cerr << "Warning: unable to allocate memory for compiled regular expression";
-        return (regex_t *)NULL;
+        return nullptr;
 
     }
 
@@ -375,12 +360,17 @@ regex_t *WordFilter::getCompiledExpression(const std::string &word) const
     {
         std::cerr << "Warning: unable to compile regular expression for [" << word << "]" << std::endl;
         free(compiledReg);
-        return (regex_t *)NULL;
+        return nullptr;
     }
-    return compiledReg;
+    return std::shared_ptr<regex_t>(compiledReg, [](regex_t *r) {
+        if (r)
+        {
+            regfree(r);
+            free(r);
+        }
+    });
 
 }
-#endif /* HAVE_REGEX_H */
 
 
 std::string WordFilter::l33tspeakSetFromCharacter(const char c) const
@@ -686,45 +676,6 @@ WordFilter::WordFilter(const WordFilter& _filter)
 /** destructor releases the compiled bad words */
 WordFilter::~WordFilter(void)
 {
-    ExpCompareSet::iterator i;
-
-    // delete compiled words
-    for (int j = 0; j < MAX_FILTER_SETS; j++)
-    {
-        for (i = filters[j].begin();
-                i != filters[j].end();
-                ++i)
-        {
-            if (i->compiled)
-            {
-                regfree(i->compiled);
-                free(i->compiled);
-            }
-        }
-    }
-    // delete compiled prefixes
-    for (i = prefixes.begin();
-            i != prefixes.end();
-            ++i)
-    {
-        if (i->compiled)
-        {
-            regfree(i->compiled);
-            free(i->compiled);
-        }
-    }
-    // delete compiled suffixes
-    for (i = suffixes.begin();
-            i != suffixes.end();
-            ++i)
-    {
-        if (i->compiled)
-        {
-            regfree(i->compiled);
-            free(i->compiled);
-        }
-    }
-
     return;
 }
 
@@ -759,8 +710,6 @@ bool WordFilter::addToFilter(const std::string &word, const std::string &express
         if (filters[firstchar].find(newFilter) != \
                 filters[firstchar].end())
         {
-            regfree(newFilter.compiled);
-            free(newFilter.compiled);
             return false;
         }
         else

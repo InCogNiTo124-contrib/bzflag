@@ -220,6 +220,9 @@ std::vector<std::string> tokenize(const std::string& in, const std::string &deli
 
 bool parseDuration(const char *duration, int &durationInt)
 {
+    if (!duration || duration[0] == '\0')
+        return false;
+
     if (strcasecmp(duration,"short") == 0
             || strcasecmp(duration,"default") == 0)
     {
@@ -233,40 +236,53 @@ bool parseDuration(const char *duration, int &durationInt)
         return true;
     }
 
-    regex_t preg;
-    int res = regcomp(&preg, "^([[:digit:]]+[hwdm]?)+$",
-                      REG_ICASE | REG_NOSUB | REG_EXTENDED);
-    res = regexec(&preg, duration, 0, NULL, 0);
-    regfree(&preg);
-    if (res == REG_NOMATCH)
-        return false;
-
     durationInt = 0;
     int t = 0;
+    bool hasDigits = false;
     int len = (int)strlen(duration);
     for (int i = 0; i < len; i++)
     {
-        if (isdigit(duration[i]))
-            t = t * 10 + (duration[i] - '0');
-        else if (duration[i] == 'h' || duration[i] == 'H')
+        unsigned char c = static_cast<unsigned char>(duration[i]);
+        if (isdigit(c))
         {
+            t = t * 10 + (duration[i] - '0');
+            hasDigits = true;
+        }
+        else if (c == 'h' || c == 'H')
+        {
+            if (!hasDigits)
+                return false;
             durationInt += (t * 60);
             t = 0;
+            hasDigits = false;
         }
-        else if (duration[i] == 'd' || duration[i] == 'D')
+        else if (c == 'd' || c == 'D')
         {
+            if (!hasDigits)
+                return false;
             durationInt += (t * 1440);
             t = 0;
+            hasDigits = false;
         }
-        else if (duration[i] == 'w' || duration[i] == 'W')
+        else if (c == 'w' || c == 'W')
         {
+            if (!hasDigits)
+                return false;
             durationInt += (t * 10080);
             t = 0;
+            hasDigits = false;
         }
-        else if (duration[i] == 'm' || duration[i] == 'M')
+        else if (c == 'm' || c == 'M')
         {
-            durationInt += (t);
+            if (!hasDigits)
+                return false;
+            durationInt += t;
             t = 0;
+            hasDigits = false;
+        }
+        else
+        {
+            return false;
         }
     }
     durationInt += t;

@@ -52,7 +52,6 @@ check_type_size("float" SIZEOF_FLOAT)
 check_type_size("double" SIZEOF_DOUBLE)
 check_type_size("long double" SIZEOF_LONG_DOUBLE)
 
-check_include_file("values.h" HAVE_VALUES_H)
 check_include_file("regex.h" HAVE_REGEX_H)
 check_include_file("linux/input.h" HAVE_LINUX_INPUT_H)
 check_include_file("sched.h" HAVE_SCHED_H)

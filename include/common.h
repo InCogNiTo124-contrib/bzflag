@@ -31,8 +31,16 @@
 #include <stdio.h>
 #include <stdlib.h> /* needed for bzfrand */
 #include <math.h>
+#include <limits.h>
+#include <inttypes.h>
+#include <stdint.h>
 #ifdef __cplusplus
 #  include <cmath>
+#  include <cstdint>
+#  include <cinttypes>
+#  include <climits>
+#  include <algorithm>
+#  include <iterator>
 #endif
 
 
@@ -132,96 +140,14 @@ extern int debugLevel;
 #  endif
 #endif
 
-/* some platforms don't have float versions of the math library */
-#ifndef HAVE_ASINF
-#  define   asinf       (float)asin
-#endif
-#ifndef HAVE_ATAN2F
-#  define   atan2f      (float)atan2
-#endif
-#ifndef HAVE_ATANF
-#  define   atanf       (float)atan
-#endif
-#ifndef HAVE_COSF
-#  define   cosf        (float)cos
-#endif
-#ifndef HAVE_EXPF
-#  define   expf        (float)exp
-#endif
-#ifndef HAVE_FABSF
-#  define   fabsf       (float)fabs
-#endif
-#ifndef HAVE_FLOORF
-#  define   floorf      (float)floor
-#endif
-#ifndef HAVE_FMODF
-#  define   fmodf       (float)fmod
-#endif
-#ifndef HAVE_HYPOTF
-#  define   hypotf      (float)hypot
-#endif
-#ifndef HAVE_LOGF
-#  define   logf        (float)log
-#endif
-#ifndef HAVE_LOG10F
-#  define   log10f      (float)log10
-#endif
-#ifndef HAVE_POWF
-#  define   powf        (float)pow
-#endif
-#ifndef HAVE_SINF
-#  define   sinf        (float)sin
-#endif
-#ifndef HAVE_SQRTF
-#  define   sqrtf       (float)sqrt
-#endif
-#ifndef HAVE_TANF
-#  define   tanf        (float)tan
-#endif
-
-
 /* random number stuff */
 #define bzfrand()   ((double)rand() / ((double)RAND_MAX + 1.0))
 #define bzfsrand(_s)    srand(_s)
 
-#ifndef __BEOS__
-#  ifdef HAVE_VALUES_H
-#    include <values.h>
-#  endif
-#  ifdef HAVE_LIMITS_H
-#    include <limits.h>
-#  endif
-#else
-#  include <limits.h>
-/* BeOS: FIXME */
-#  define MAXSHORT SHORT_MAX
-#  define MAXINT INT_MAX
-#  define MAXLONG LONG_MAX
-#endif /* __BEOS__ */
+#include <regex.h>
 
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
-#endif
-
-/* need some integer types */
-#ifdef HAVE_INTTYPES_H
-#  include <inttypes.h>
-#endif
-
-#ifdef HAVE_STDINT_H
-#  include <stdint.h>
-#else
-#  if defined(__linux) || (defined(__sgi) && !defined(__INTTYPES_MAJOR))
-typedef u_int16_t   uint16_t;
-typedef u_int32_t   uint32_t;
-#  endif
-#  if defined(sun)
-typedef signed short    int16_t;
-typedef ushort_t    uint16_t;
-typedef signed int  int32_t;
-typedef uint_t      uint32_t;
-#  endif
-typedef unsigned char   uint8_t;
 #endif
 
 
@@ -239,94 +165,16 @@ typedef unsigned char   uint8_t;
 #  define   M_SQRT1_2   0.70710678118654752440f
 #endif
 
-
-#ifdef __BEOS__
-#  ifndef setenv
-#    define setenv(a,b,c)
-#  endif
-#  ifndef putenv
-#    define putenv(a)
-#  endif
-#endif /* __BEOS__ */
-
-#define bzcountof(__x)   (sizeof(__x) / sizeof(__x[0]))
-
-
-#ifdef HAVE_STD__ISNAN
-#  ifdef isnan
-#    undef isnan
-#  endif
-#  define isnan std::isnan
-#elif defined(HAVE__ISNAN)
-#  ifdef isnan
-#    undef isnan
-#  endif
-#  define isnan _isnan
+#ifdef __cplusplus
+#  define bzcountof(__x)   std::size(__x)
 #else
-#  ifndef HAVE_ISNAN
-#    ifdef __cplusplus
-#      ifdef isnan
-#   undef isnan
-#      endif
-template<typename Tp>
-inline int isnan(Tp f)
-{
-    return (f!=f);
-}
-#    else
-#      define isnan(f) ((f) != (f))
-#    endif /* __cplusplus */
-#  endif /* HAVE_ISNAN */
-#endif /* HAVE_STD__ISNAN */
+#  define bzcountof(__x)   (sizeof(__x) / sizeof(__x[0]))
+#endif
 
-
-#ifndef HAVE_STD__MAX
-#  ifdef __cplusplus
-#    ifdef max
-#      undef max
-#    endif
-namespace std
-{
-template<typename comparable>
-inline const comparable& max(const comparable& a, const comparable& b)
-{
-    return  a < b ? b : a;
-}
-}
-#  else
-#    ifdef max
-#      undef max
-#    endif
-#    define max(a,b) a < b ? b : a
-#  endif /* __cplusplus */
-#endif /* HAVE_STD__MAX */
-
-#ifndef HAVE_STD__MIN
-#  ifdef __cpluscplus
-#    ifdef min
-#      undef min
-#    endif
-namespace std
-{
-template<typename comparable>
-inline const comparable& min(const comparable& a, const comparable& b)
-{
-    return b < a ? b : a;
-}
-}
-#  else
-#    ifdef min
-#      undef min
-#    endif
-#    define min(a,b) b < a ? b : a
-#  endif /* __cplusplus */
-#endif /* HAVE_STD_MIN */
-
-#if defined(HAVE_REGEX_H)
-#  include <regex.h>
-#else
-#  define regex_t void
-#endif  /* HAVE_REGEX_H */
+#ifdef isnan
+#  undef isnan
+#endif
+#define isnan std::isnan
 
 // vectors implemented as arrays
 typedef float afvec2[2];

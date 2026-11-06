@@ -18,24 +18,6 @@
 /* Half rate Audio */
 #define HALF_RATE_AUDIO 1
 
-/* libm math functions */
-#define HAVE_ACOSF 1
-#define HAVE_ASINF 1
-#define HAVE_ATAN2F 1
-#define HAVE_ATANF 1
-#define HAVE_COSF 1
-#define HAVE_EXPF 1
-#define HAVE_FABSF 1
-#define HAVE_FLOORF 1
-#define HAVE_FMODF 1
-#define HAVE_HYPOTF 1
-#define HAVE_LOG10F 1
-#define HAVE_LOGF 1
-#define HAVE_POWF 1
-#define HAVE_SINF 1
-#define HAVE_SQRTF 1
-#define HAVE_TANF 1
-
 /* Define if libcares includes ares_getaddrinfo. */
 #define HAVE_ARES_GETADDRINFO 1
 
@@ -78,10 +60,6 @@
 #define HAVE_STDINT_H 1
 #define HAVE_STDIO_H 1
 #define HAVE_STDLIB_H 1
-#define HAVE_STD__COUNT 1
-#define HAVE_STD__ISNAN 1
-#define HAVE_STD__MAX 1
-#define HAVE_STD__MIN 1
 #define HAVE_STRINGS_H 1
 #define HAVE_STRING_H 1
 #define HAVE_SYS_PARAM_H 1
@@ -90,7 +68,6 @@
 #define HAVE_SYS_TYPES_H 1
 #define HAVE_UNISTD_H 1
 #define HAVE_USLEEP 1
-#cmakedefine HAVE_VALUES_H 1
 #define HAVE_VSNPRINTF 1
 #cmakedefine WORDS_BIGENDIAN 1
 

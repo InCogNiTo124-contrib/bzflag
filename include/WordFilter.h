@@ -19,6 +19,7 @@
 #include <string>
 #include <set>
 #include <algorithm>
+#include <memory>
 #include <string.h>
 
 #include <fstream>
@@ -95,7 +96,7 @@ public:
     typedef struct filterStruct
     {
         std::string word;
-        regex_t *compiled;
+        std::shared_ptr<regex_t> compiled;
     } filter_t;
 
 
@@ -182,7 +183,7 @@ protected:
     /** provides a pointer to a fresh compiled
      * expression for some given expression
      */
-    regex_t *getCompiledExpression(const std::string &expression) const;
+    std::shared_ptr<regex_t> getCompiledExpression(const std::string &expression) const;
 
     /** returns a set of characters that represent the
      * given character in "l33t-speak"
@@ -281,46 +282,25 @@ inline int WordFilter::filterCharacters(char *input, unsigned int start, size_t 
 
 inline void WordFilter::appendUniqueChar(std::string& string, char c) const
 {
-#ifdef HAVE_STD__COUNT
-// ISO standard std::count
     if (std::count(string.begin(), string.end(), c) == 0)
         string += c;
-#else
-// old HP-style std::count (SunPRO for instance)
-    int n = 0;
-    std::count(string.begin(), string.end(), c, n);
-    if (n == 0)
-        string += c;
-#endif
 }
 
 
 inline void WordFilter::addPrefix(const char *word)
 {
     filter_t fix;
-    std::pair<ExpCompareSet::iterator, bool> result;
     fix.word = std::string(word);
     fix.compiled = getCompiledExpression(expressionFromString(fix.word));
-    result = prefixes.insert(fix);
-    if (!result.second && fix.compiled)
-    {
-        regfree(fix.compiled);
-        free(fix.compiled);
-    }
+    prefixes.insert(fix);
 }
 
 inline void WordFilter::addSuffix(const char *word)
 {
     filter_t fix;
-    std::pair<ExpCompareSet::iterator, bool> result;
     fix.word = std::string(word);
     fix.compiled = getCompiledExpression(expressionFromString(fix.word));
-    result = suffixes.insert(fix);
-    if (!result.second && fix.compiled)
-    {
-        regfree(fix.compiled);
-        free(fix.compiled);
-    }
+    suffixes.insert(fix);
 }
 
 

@@ -16,15 +16,7 @@
 #include "common.h"
 
 /* system interface headers */
-// work around an ugly STL bug in BeOS
-// FIXME someone test whether it is still needed
-#ifdef __BEOS__
-#define private public
-#endif
 #include <bitset>
-#ifdef __BEOS__
-#undef private
-#endif
 #include <vector>
 #include <map>
 #include <algorithm>
